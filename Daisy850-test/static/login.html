@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>登录 · 850 Toolbox</title>
+<style>
+:root { --bg: #0f172a; --card: #1e293b; --b2: #334155; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; --green: #22c55e; --red: #ef4444; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+.card { background: var(--card); border: 1px solid var(--b2); border-radius: 14px; padding: 32px 24px; width: 100%; max-width: 360px; }
+.card h2 { font-size: 18px; margin-bottom: 4px; }
+.card .sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.fg { margin-bottom: 14px; }
+.fg label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+.fg input { width: 100%; padding: 10px 12px; font-size: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--b2); border-radius: 6px; }
+.btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+.btn-a { background: var(--accent); color: #fff; }
+.btn-b { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.msg { font-size: 11px; padding: 8px; border-radius: 4px; margin-bottom: 10px; display: none; }
+.msg.err { display: block; background: rgba(239,68,68,.15); color: var(--red); }
+.msg.ok { display: block; background: rgba(34,197,94,.15); color: var(--green); }
+</style>
+</head>
+<body>
+<div class="card" id="login-card">
+  <h2>850 Toolbox</h2>
+  <div class="sub">登录或注册</div>
+  <div id="msg" class="msg"></div>
+  <div class="fg"><label>账号</label><input type="text" id="username" placeholder="输入账号" autocomplete="username"></div>
+  <div class="fg"><label>密码</label><input type="password" id="password" placeholder="输入密码" autocomplete="current-password"></div>
+  <button class="btn btn-a" onclick="doLogin()">登录</button>
+  <button class="btn btn-b" onclick="doRegister()">注册新账号</button>
+  <div style="font-size:10px;color:var(--muted);text-align:center;">注册后需管理员审批</div>
+</div>
+<script>
+function msg(t,ok){var m=document.getElementById('msg');m.textContent=t;m.className='msg '+(ok?'ok':'err');}
+async function doLogin(){
+  var u=document.getElementById('username').value.trim(),p=document.getElementById('password').value.trim();
+  if(!u||!p){msg('请输入账号密码');return;}
+  try{
+    var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    var d=await r.json();
+    if(d.ok){window.location.href='/k1.html'}else{msg(d.error)}
+  }catch(e){msg('网络错误')}
+}
+async function doRegister(){
+  var u=document.getElementById('username').value.trim(),p=document.getElementById('password').value.trim();
+  if(!u||!p){msg('请输入账号密码');return;}
+  if(u.length<2){msg('账号至少2位');return;}
+  if(p.length<4){msg('密码至少4位');return;}
+  if(!confirm('确认注册账号: '+u+' ?\n\n注册后需等待管理员审批才能使用。'))return;
+  try{
+    var r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    var d=await r.json();
+    if(d.ok){msg(d.msg,true)}else{msg(d.error)}
+  }catch(e){msg('网络错误')}
+}
+document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Daisy 850 v1 — Gitignore
+__pycache__/
+*.pyc
+*.spec
+build/
+dist/
+*.zip
+data/
+*.exe
+_internal/
+*.pyd
+*.dll
+*.so
+850PO_data/pull_*/
+850PO_data/*.xlsx
+850PO_data/*.png
+*.log
+.env

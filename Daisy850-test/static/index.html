@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Daisy 850 v1</title>
+<meta name="theme-color" content="#f1f5f9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   850 Toolbox — Home
+   Mobile-first with PWA support
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg: #f1f5f9; --card: #fff; --border: #e2e8f0;
+  --text: #1e293b; --muted: #64748b; --accent: #2563eb;
+  --danger: #dc2626; --success: #16a34a; --r: 10px;
+  --nav-h: 56px; --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  padding: 14px 14px calc(var(--nav-h) + var(--safe-bot) + 12px) 14px;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+h1 { font-size: 20px; margin-bottom: 2px; }
+.subtitle { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+
+/* ── Status bar ────────────────────────────────────────── */
+.status-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.status-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 14px; font-size: 11px;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.status-card .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-card .dot.green { background: var(--success); }
+.status-card .dot.gray { background: #94a3b8; }
+
+/* ── Actions ───────────────────────────────────────────── */
+.actions { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+.btn {
+  padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--card); color: var(--text); font-size: 13px;
+  cursor: pointer; transition: all .15s; min-height: 40px;
+  touch-action: manipulation; white-space: nowrap;
+}
+.btn:active { transform: scale(.97); }
+.btn-a { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-s { background: var(--success); color: #fff; border-color: var(--success); }
+input {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r);
+  font-size: 13px; min-height: 40px; width: 100%; max-width: 160px;
+}
+
+/* ── Tools grid ────────────────────────────────────────── */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.tool-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; color: var(--text);
+  text-decoration: none; display: block; transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tool-card:active { background: #f8fafc; transform: scale(.98); }
+.tool-card .icon { font-size: 28px; margin-bottom: 8px; }
+.tool-card h3 { font-size: 14px; margin-bottom: 4px; }
+.tool-card p { font-size: 11px; color: var(--muted); }
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 80px; right: 14px; background: var(--text);
+  color: #fff; padding: 10px 18px; border-radius: var(--r);
+  font-size: 12px; display: none; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+.toast.show { display: block; animation: fadeIn .3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Bottom Nav ────────────────────────────────────────── */
+.bottom-nav {
+  display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h); background: rgba(255,255,255,.95);
+  border-top: 1px solid var(--border); z-index: 150;
+  padding-bottom: var(--safe-bot);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: var(--muted); text-decoration: none;
+  font-size: 10px; gap: 2px; min-height: 44px;
+}
+.bn-item.active { color: var(--accent); }
+.bn-item .bn-icon { font-size: 18px; line-height: 1; }
+.bn-item .bn-label { font-size: 9px; }
+
+/* ═══════════════════════════════════════════════════════
+   DESKTOP
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  body { padding: 20px; }
+  h1 { font-size: 22px; }
+  .subtitle { font-size: 13px; }
+  .btn { padding: 8px 18px; font-size: 13px; min-height: auto; }
+  input { padding: 8px 12px; font-size: 13px; min-height: auto; width: 150px; }
+  .tools { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .tool-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(37,99,235,.12); transform: translateY(-2px); }
+  .tool-card .icon { font-size: 32px; }
+  .tool-card h3 { font-size: 15px; }
+  .tool-card p { font-size: 12px; }
+  .bottom-nav { display: none; }
+  .toast { bottom: 20px; right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Bottom Navigation ═══ -->
+<nav class="bottom-nav">
+  <a href="/" class="bn-item active"><span class="bn-icon">🏠</span><span class="bn-label">首页</span></a>
+  <a href="/k1.html" class="bn-item"><span class="bn-icon">📊</span><span class="bn-label">K1</span></a>
+  <a href="/shipped.html" class="bn-item"><span class="bn-icon">🚚</span><span class="bn-label">出货</span></a>
+  <a href="/sort.html" class="bn-item"><span class="bn-icon">📋</span><span class="bn-label">排序</span></a>
+</nav>
+
+<h1>📊 Daisy 850 v1</h1>
+<p class="subtitle">OMS 数据工具箱 — 排序 · 看板 · 报告</p>
+
+<!-- ═══ Status ═══ -->
+<div class="status-bar">
+  <div class="status-card">
+    <span class="dot" id="data-dot" style="background:#94a3b8;"></span>
+    <span id="data-status">检查中...</span>
+  </div>
+  <div class="status-card">📦 <span id="data-count">-</span> 条 PRD 订单</div>
+  <div class="status-card">🕐 更新于: <span id="data-time">-</span></div>
+</div>
+
+<!-- ═══ Actions ═══ -->
+<div class="actions">
+  <button class="btn btn-a" id="btn-pull" onclick="pullOMS()">⚡ 刷新 OMS 数据</button>
+  <input type="text" id="oms-account" placeholder="OMS 账号" style="max-width:120px;">
+  <input type="password" id="oms-pass" placeholder="OMS 密码" style="max-width:130px;">
+  <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap;">
+    <input type="checkbox" id="remember-pw" checked onchange="toggleRemember()" style="width:auto;min-height:auto;"> 记住
+  </label>
+  <span id="pull-status" style="font-size:11px;align-self:center;"></span>
+</div>
+
+<!-- ═══ Tools ═══ -->
+<div class="tools">
+  <a href="/sort.html" target="_blank" class="tool-card">
+    <div class="icon">🔗</div><h3>优先级排序</h3>
+    <p>订单类型分组 · MSBD · Ship Mode · 例外管理 · 拖拽 · 导出</p>
+  </a>
+  <a href="/k1.html" target="_blank" class="tool-card">
+    <div class="icon">📈</div><h3>K1 PRD 看板</h3>
+    <p>订单总览 · CTO P1 28H · Backlog · 出货预计</p>
+  </a>
+  <a href="/shipped.html" target="_blank" class="tool-card">
+    <div class="icon">📦</div><h3>出货历史</h3>
+    <p>按天/周/月/季/年统计出货量 · 柱状图</p>
+  </a>
+  <a href="/a2.html" target="_blank" class="tool-card">
+    <div class="icon">📋</div><h3>GPP Report</h3>
+    <p>物料齐套报告 · 自动回填 · Excel 生成</p>
+  </a>
+  <a href="/eoq.html" target="_blank" class="tool-card">
+    <div class="icon">✈️</div><h3>EOQ 出货模式切换</h3>
+    <p>按MCID+日期+类型筛选 · Air→PA标记 · CSV导出</p>
+  </a>
+  <a href="/fga870.html" target="_blank" class="tool-card">
+    <div class="icon">🧮</div><h3>870 FGA 优先级分配</h3>
+    <p>同IPN+MCID组内分配 · 好产出上浮 · 缺料/hold下沉</p>
+  </a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ PWA Shared Logic ═══ -->
+<script src="/app.js"></script>
+
+<!-- ═══ Home Logic ═══ -->
+<script>
+async function checkCache() {
+  try {
+    var r = await fetch('/api/cache');
+    var d = await r.json();
+    var dot = document.getElementById('data-dot');
+    var status = document.getElementById('data-status');
+    if (d.cached) {
+      dot.className = 'dot green';
+      status.textContent = '数据就绪';
+      document.getElementById('data-count').textContent = (d.po_count||0).toLocaleString();
+      document.getElementById('data-time').textContent = (d.time||'').substring(0,19);
+    } else {
+      dot.className = 'dot gray';
+      status.textContent = '无缓存数据';
+      document.getElementById('data-count').textContent = '0';
+      document.getElementById('data-time').textContent = '-';
+    }
+    window._pwaMarkRefresh && window._pwaMarkRefresh();
+  } catch(e) {}
+}
+
+async function pullOMS() {
+  var btn = document.getElementById('btn-pull');
+  var st = document.getElementById('pull-status');
+  var acc = document.getElementById('oms-account').value.trim() || '31000161';
+  var pw = document.getElementById('oms-pass').value;
+  if (!pw) { st.innerHTML = '<span style="color:var(--danger);">⚠️ 请输入密码</span>'; return; }
+
+  btn.disabled = true; btn.textContent = '⏳ 正在拉取 (约30秒)...';
+  st.innerHTML = '<span style="color:var(--accent);">⏳ 拉取 850 + E2E + GPP 中...</span>';
+  if (document.getElementById('remember-pw').checked) {
+    localStorage.setItem('oms_account', acc);
+    localStorage.setItem('oms_password', pw);
+  }
+
+  try {
+    var r = await fetch('/api/oms-pull', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({account: acc, password: pw})
+    });
+    var d = await r.json();
+    btn.disabled = false; btn.textContent = '⚡ 刷新 OMS 数据';
+    if (d.ok) {
+      var ts = (d.time||'').substring(11,19);
+      st.innerHTML = '<span style="color:var(--success);font-weight:600;">✅ 拉取完成 · ' +
+        (d.po_count||0).toLocaleString() + ' 条 PO · ' +
+        (d.e2e_count||0).toLocaleString() + ' E2E · ' +
+        (d.gpp_count||0) + ' GPP · ' + ts + '</span>';
+      document.getElementById('data-status').textContent = '数据就绪 (' + ts + ')';
+      document.getElementById('data-dot').className = 'dot green';
+      checkCache();
+    } else {
+      st.innerHTML = '<span style="color:var(--danger);">❌ ' + (d.error || '拉取失败') + '</span>';
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '⚡ 刷新 OMS 数据';
+    st.innerHTML = '<span style="color:var(--danger);">❌ 网络连接失败</span>';
+  }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+// Password memory
+(function(){
+  var ap = localStorage.getItem('oms_account');
+  var pp = localStorage.getItem('oms_password');
+  if (ap) document.getElementById('oms-account').value = ap;
+  if (pp) { document.getElementById('oms-pass').value = pp; document.getElementById('remember-pw').checked = true; }
+})();
+function toggleRemember() {
+  if (document.getElementById('remember-pw').checked) {
+    localStorage.setItem('oms_account', document.getElementById('oms-account').value);
+    localStorage.setItem('oms_password', document.getElementById('oms-pass').value);
+  } else {
+    localStorage.removeItem('oms_account'); localStorage.removeItem('oms_password');
+  }
+}
+
+// PWA auto-refresh
+window._pageRefresh = function() { checkCache(); };
+
+checkCache();
+</script>
+</body>
+</html>

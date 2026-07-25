@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>出货历史 · 850 Toolbox</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   850 Toolbox — Shipment History
+   Mobile-first with PWA support
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg: #0f172a; --card: #1e293b; --b2: #334155;
+  --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6;
+  --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+  --nav-h: 56px; --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  padding: 10px 10px calc(var(--nav-h) + var(--safe-bot) + 12px) 10px;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.header-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 6px;
+}
+.header-bar h2 { font-size: 15px; margin: 0; }
+.live-dot { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.live-on { color: #22c55e; background: rgba(34,197,94,.1); }
+.live-stale { color: #f59e0b; background: rgba(245,158,11,.1); }
+.live-old { color: #ef4444; background: rgba(239,68,68,.1); }
+
+/* ── Links ─────────────────────────────────────────────── */
+a { color: var(--accent); text-decoration: none; font-size: 12px; }
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card {
+  background: var(--card); border: 1px solid var(--b2);
+  border-radius: 10px; padding: 16px; margin-bottom: 10px;
+}
+
+/* ── KPI row ───────────────────────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 10px; }
+.kpi { background: var(--card); border: 1px solid var(--b2); border-radius: 10px; padding: 14px 16px; text-align: center; }
+.kpi .v { font-size: 22px; font-weight: 800; color: #fff; }
+.kpi .l { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+
+/* ── Filter row ────────────────────────────────────────── */
+.filter-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 10px; padding: 10px 12px;
+  background: var(--card); border: 1px solid var(--b2); border-radius: 10px;
+}
+.filter-row select, .filter-row input {
+  padding: 8px 10px; font-size: 13px; background: var(--bg);
+  color: var(--text); border: 1px solid var(--b2); border-radius: 4px;
+  min-height: 40px;
+}
+.btn {
+  padding: 8px 16px; border: 1px solid var(--b2); border-radius: 4px;
+  color: var(--text); background: var(--card); cursor: pointer;
+  font-size: 12px; min-height: 40px; touch-action: manipulation;
+}
+.btn-a { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── Chart ─────────────────────────────────────────────── */
+.chart-wrap { position: relative; height: 250px; }
+
+/* ── Bottom Nav ────────────────────────────────────────── */
+.bottom-nav {
+  display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h); background: rgba(15,23,42,.95);
+  border-top: 1px solid var(--b2); z-index: 150;
+  padding-bottom: var(--safe-bot);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: var(--muted); text-decoration: none;
+  font-size: 10px; gap: 2px; min-height: 44px;
+}
+.bn-item.active { color: var(--accent); }
+.bn-item .bn-icon { font-size: 18px; line-height: 1; }
+.bn-item .bn-label { font-size: 9px; }
+
+/* ── Footer ────────────────────────────────────────────── */
+.footer { text-align: center; font-size: 9px; color: var(--muted); margin-top: 12px; }
+
+/* ── Date inputs ───────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+
+/* ═══════════════════════════════════════════════════════
+   DESKTOP
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  body { padding: 20px; }
+  .header-bar h2 { font-size: 18px; }
+  .kpi-row { display: flex; gap: 12px; }
+  .kpi { min-width: 160px; }
+  .kpi .v { font-size: 24px; }
+  .filter-row select, .filter-row input { padding: 5px 8px; font-size: 11px; min-height: auto; }
+  .btn { padding: 5px 14px; font-size: 11px; min-height: auto; }
+  .chart-wrap { height: 350px; }
+  .bottom-nav { display: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ Bottom Navigation ═══ -->
+<nav class="bottom-nav">
+  <a href="/" class="bn-item"><span class="bn-icon">🏠</span><span class="bn-label">首页</span></a>
+  <a href="/k1.html" class="bn-item"><span class="bn-icon">📊</span><span class="bn-label">K1</span></a>
+  <a href="/shipped.html" class="bn-item active"><span class="bn-icon">🚚</span><span class="bn-label">出货</span></a>
+  <a href="/sort.html" class="bn-item"><span class="bn-icon">📋</span><span class="bn-label">排序</span></a>
+</nav>
+
+<!-- ═══ Header ═══ -->
+<div class="header-bar">
+  <div>
+    <a href="/">← 返回工具箱</a>
+    <h2 style="display:inline-block;margin-left:8px;">📦 出货历史</h2>
+  </div>
+  <span class="live-dot live-on" id="live-status">🟢 实时</span>
+</div>
+
+<!-- ═══ KPI Cards ═══ -->
+<div class="kpi-row" id="kpi-cards">
+  <div class="kpi"><div class="l">总出货单数</div><div class="v" id="k-count">-</div></div>
+  <div class="kpi"><div class="l">总出货量</div><div class="v" id="k-qty">-</div></div>
+</div>
+
+<!-- ═══ Filter ═══ -->
+<div class="filter-row">
+  <span style="color:var(--muted);font-size:11px;">粒度:</span>
+  <select id="gran" onchange="load()">
+    <option value="day">按天</option>
+    <option value="week">按周</option>
+    <option value="month" selected>按月</option>
+    <option value="quarter">按季度</option>
+    <option value="year">按年</option>
+  </select>
+  <button class="btn btn-a" onclick="load()" style="font-size:11px;">🔄 刷新</button>
+</div>
+
+<!-- ═══ Chart ═══ -->
+<div class="card"><div class="chart-wrap"><canvas id="chart"></canvas></div></div>
+
+<div class="footer">850 Toolbox · Shipment History</div>
+
+<!-- ═══ PWA Shared Logic ═══ -->
+<script src="/app.js"></script>
+
+<!-- ═══ Chart Logic ═══ -->
+<script>
+var chart = null;
+function fmt(n){ return (n||0).toLocaleString(); }
+
+function load(){
+  var g = document.getElementById('gran').value;
+  fetch('/api/shipped-history?granularity='+g).then(function(r){return r.json()}).then(function(d){
+    document.getElementById('k-count').textContent = fmt(d.total_shipped);
+    document.getElementById('k-qty').textContent = fmt(d.total_qty)+' pcs';
+    var labels = d.data.map(function(x){return x.label});
+    var qtys = d.data.map(function(x){return x.qty});
+    var ctx = document.getElementById('chart').getContext('2d');
+    if(chart) chart.destroy();
+    var barP = g==='day'?0.3:g==='week'?0.4:g==='month'?0.5:g==='quarter'?0.6:0.7;
+    chart = new Chart(ctx,{
+      type:'bar',data:{
+        labels:labels,datasets:[{label:'出货量(pcs)',data:qtys,backgroundColor:'#22c55e',borderRadius:3,barPercentage:barP,categoryPercentage:0.9}]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},
+        scales:{
+          x:{ticks:{color:'#94a3b8',font:{size:9},maxRotation:45}},
+          y:{ticks:{color:'#94a3b8',font:{size:9}},beginAtZero:true}
+        }
+      }
+    });
+    // Mark PWA refresh
+    window._pwaMarkRefresh && window._pwaMarkRefresh();
+  });
+}
+
+// PWA auto-refresh hook
+window._pageRefresh = function() { load(); };
+
+load();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

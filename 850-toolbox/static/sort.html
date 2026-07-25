@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>850通用排序 1.0</title>
+<script>
+/* Papa Parse v5.4.1 — inline for offline CSV support */
+!function(e,t){"function"==typeof define&&define.amd?define([],t):"object"==typeof module&&"undefined"!=typeof exports?module.exports=t():e.Papa=t()}(this,function s(){"use strict";var f="undefined"!=typeof self?self:"undefined"!=typeof window?window:void 0!==f?f:{};var n=!f.document&&!!f.postMessage,o=f.IS_PAPA_WORKER||!1,a={},u=0,b={parse:function(e,t){var r=(t=t||{}).dynamicTyping||!1;J(r)&&(t.dynamicTypingFunction=r,r={});if(t.dynamicTyping=r,t.transform=!!J(t.transform)&&t.transform,t.worker&&b.WORKERS_SUPPORTED){var i=function(){if(!b.WORKERS_SUPPORTED)return!1;var e=(r=f.URL||f.webkitURL||null,i=s.toString(),b.BLOB_URL||(b.BLOB_URL=r.createObjectURL(new Blob(["var global = (function() { if (typeof self !== 'undefined') { return self; } if (typeof window !== 'undefined') { return window; } if (typeof global !== 'undefined') { return global; } return {}; })(); global.IS_PAPA_WORKER=true; ","(",i,")();"],{type:"text/javascript"})))),t=new f.Worker(e);var r,i;return t.onmessage=_,t.id=u++,a[t.id]=t}();return i.userStep=t.step,i.userChunk=t.chunk,i.userComplete=t.complete,i.userError=t.error,t.step=J(t.step),t.chunk=J(t.chunk),t.complete=J(t.complete),t.error=J(t.error),delete t.worker,void i.postMessage({input:e,config:t,workerId:i.id})}var n=null;b.NODE_STREAM_INPUT,"string"==typeof e?(e=function(e){if(65279===e.charCodeAt(0))return e.slice(1);return e}(e),n=t.download?new l(t):new p(t)):!0===e.readable&&J(e.read)&&J(e.on)?n=new g(t):(f.File&&e instanceof File||e instanceof Object)&&(n=new c(t));return n.stream(e)},unparse:function(e,t){var n=!1,_=!0,m=",",y="\r\n",s='"',a=s+s,r=!1,i=null,o=!1;!function(){if("object"!=typeof t)return;"string"!=typeof t.delimiter||b.BAD_DELIMITERS.filter(function(e){return-1!==t.delimiter.indexOf(e)}).length||(m=t.delimiter);("boolean"==typeof t.quotes||"function"==typeof t.quotes||Array.isArray(t.quotes))&&(n=t.quotes);"boolean"!=typeof t.skipEmptyLines&&"string"!=typeof t.skipEmptyLines||(r=t.skipEmptyLines);"string"==typeof t.newline&&(y=t.newline);"string"==typeof t.quoteChar&&(s=t.quoteChar);"boolean"==typeof t.header&&(_=t.header);if(Array.isArray(t.columns)){if(0===t.columns.length)throw new Error("Option columns is empty");i=t.columns}void 0!==t.escapeChar&&(a=t.escapeChar+s);("boolean"==typeof t.escapeFormulae||t.escapeFormulae instanceof RegExp)&&(o=t.escapeFormulae instanceof RegExp?t.escapeFormulae:/^[=+\-@\t\r].*$/)}();var u=new RegExp(Q(s),"g");"string"==typeof e&&(e=JSON.parse(e));if(Array.isArray(e)){if(!e.length||Array.isArray(e[0]))return h(null,e,r);if("object"==typeof e[0])return h(i||Object.keys(e[0]),e,r)}else if("object"==typeof e)return"string"==typeof e.data&&(e.data=JSON.parse(e.data)),Array.isArray(e.data)&&(e.fields||(e.fields=e.meta&&e.meta.fields||i),e.fields||(e.fields=Array.isArray(e.data[0])?e.fields:"object"==typeof e.data[0]?Object.keys(e.data[0]):[]),Array.isArray(e.data[0])||"object"==typeof e.data[0]||(e.data=[e.data])),h(e.fields||[],e.data||[],r);throw new Error("Unable to serialize unrecognized input");function h(e,t,r){var i="";"string"==typeof e&&(e=JSON.parse(e)),"string"==typeof t&&(t=JSON.parse(t));var n=Array.isArray(e)&&0<e.length,s=!Array.isArray(t[0]);if(n&&_){for(var a=0;a<e.length;a++)0<a&&(i+=m),i+=v(e[a],a);0<t.length&&(i+=y)}for(var o=0;o<t.length;o++){var u=n?e.length:t[o].length,h=!1,f=n?0===Object.keys(t[o]).length:0===t[o].length;if(r&&!n&&(h="greedy"===r?""===t[o].join("").trim():1===t[o].length&&0===t[o][0].length),"greedy"===r&&n){for(var d=[],l=0;l<u;l++){var c=s?e[l]:l;d.push(t[o][c])}h=""===d.join("").trim()}if(!h){for(var p=0;p<u;p++){0<p&&!f&&(i+=m);var g=n&&s?e[p]:p;i+=v(t[o][g],p)}o<t.length-1&&(!r||0<u&&!f)&&(i+=y)}}return i}function v(e,t){if(null==e)return"";if(e.constructor===Date)return JSON.stringify(e).slice(1,25);var r=!1;o&&"string"==typeof e&&o.test(e)&&(e="'"+e,r=!0);var i=e.toString().replace(u,a);return(r=r||!0===n||"function"==typeof n&&n(e,t)||Array.isArray(n)&&n[t]||function(e,t){for(var r=0;r<t.length;r++)if(-1<e.indexOf(t[r]))return!0;return!1}(i,b.BAD_DELIMITERS)||-1<i.indexOf(m)||" "===i.charAt(0)||" "===i.charAt(i.length-1))?s+i+s:i}}};if(b.RECORD_SEP=String.fromCharCode(30),b.UNIT_SEP=String.fromCharCode(31),b.BYTE_ORDER_MARK="﻿",b.BAD_DELIMITERS=["\r","\n",'"',b.BYTE_ORDER_MARK],b.WORKERS_SUPPORTED=!n&&!!f.Worker,b.NODE_STREAM_INPUT=1,b.LocalChunkSize=10485760,b.RemoteChunkSize=5242880,b.DefaultDelimiter=",",b.Parser=E,b.ParserHandle=r,b.NetworkStreamer=l,b.FileStreamer=c,b.StringStreamer=p,b.ReadableStreamStreamer=g,f.jQuery){var d=f.jQuery;d.fn.parse=function(o){var r=o.config||{},u=[];return this.each(function(e){if(!("INPUT"===d(this).prop("tagName").toUpperCase()&&"file"===d(this).attr("type").toLowerCase()&&f.FileReader)||!this.files||0===this.files.length)return!0;for(var t=0;t<this.files.length;t++)u.push({file:this.files[t],inputElem:this,instanceConfig:d.extend({},r)})}),e(),this;function e(){if(0!==u.length){var e,t,r,i,n=u[0];if(J(o.before)){var s=o.before(n.file,n.inputElem);if("object"==typeof s){if("abort"===s.action)return e="AbortError",t=n.file,r=n.inputElem,i=s.reason,void(J(o.error)&&o.error({name:e},t,r,i));if("skip"===s.action)return void h();"object"==typeof s.config&&(n.instanceConfig=d.extend(n.instanceConfig,s.config))}else if("skip"===s)return void h()}var a=n.instanceConfig.complete;n.instanceConfig.complete=function(e){J(a)&&a(e,n.file,n.inputElem),h()},b.parse(n.file,n.instanceConfig)}else J(o.complete)&&o.complete()}function h(){u.splice(0,1),e()}}}function h(e){this._handle=null,this._finished=!1,this._completed=!1,this._halted=!1,this._input=null,this._baseIndex=0,this._partialLine="",this._rowCount=0,this._start=0,this._nextChunk=null,this.isFirstChunk=!0,this._completeResults={data:[],errors:[],meta:{}},function(e){var t=w(e);t.chunkSize=parseInt(t.chunkSize),e.step||e.chunk||(t.chunkSize=null);this._handle=new r(t),(this._handle.streamer=this)._config=t}.call(this,e),this.parseChunk=function(e,t){if(this.isFirstChunk&&J(this._config.beforeFirstChunk)){var r=this._config.beforeFirstChunk(e);void 0!==r&&(e=r)}this.isFirstChunk=!1,this._halted=!1;var i=this._partialLine+e;this._partialLine="";var n=this._handle.parse(i,this._baseIndex,!this._finished);if(!this._handle.paused()&&!this._handle.aborted()){var s=n.meta.cursor;this._finished||(this._partialLine=i.substring(s-this._baseIndex),this._baseIndex=s),n&&n.data&&(this._rowCount+=n.data.length);var a=this._finished||this._config.preview&&this._rowCount>=this._config.preview;if(o)f.postMessage({results:n,workerId:b.WORKER_ID,finished:a});else if(J(this._config.chunk)&&!t){if(this._config.chunk(n,this._handle),this._handle.paused()||this._handle.aborted())return void(this._halted=!0);n=void 0,this._completeResults=void 0}return this._config.step||this._config.chunk||(this._completeResults.data=this._completeResults.data.concat(n.data),this._completeResults.errors=this._completeResults.errors.concat(n.errors),this._completeResults.meta=n.meta),this._completed||!a||!J(this._config.complete)||n&&n.meta.aborted||(this._config.complete(this._completeResults,this._input),this._completed=!0),a||n&&n.meta.paused||this._nextChunk(),n}this._halted=!0},this._sendError=function(e){J(this._config.error)?this._config.error(e):o&&this._config.error&&f.postMessage({workerId:b.WORKER_ID,error:e,finished:!1})}}function l(e){var i;(e=e||{}).chunkSize||(e.chunkSize=b.RemoteChunkSize),h.call(this,e),this._nextChunk=n?function(){this._readChunk(),this._chunkLoaded()}:function(){this._readChunk()},this.stream=function(e){this._input=e,this._nextChunk()},this._readChunk=function(){if(this._finished)this._chunkLoaded();else{if(i=new XMLHttpRequest,this._config.withCredentials&&(i.withCredentials=this._config.withCredentials),n||(i.onload=v(this._chunkLoaded,this),i.onerror=v(this._chunkError,this)),i.open(this._config.downloadRequestBody?"POST":"GET",this._input,!n),this._config.downloadRequestHeaders){var e=this._config.downloadRequestHeaders;for(var t in e)i.setRequestHeader(t,e[t])}if(this._config.chunkSize){var r=this._start+this._config.chunkSize-1;i.setRequestHeader("Range","bytes="+this._start+"-"+r)}try{i.send(this._config.downloadRequestBody)}catch(e){this._chunkError(e.message)}n&&0===i.status&&this._chunkError()}},this._chunkLoaded=function(){4===i.readyState&&(i.status<200||400<=i.status?this._chunkError():(this._start+=this._config.chunkSize?this._config.chunkSize:i.responseText.length,this._finished=!this._config.chunkSize||this._start>=function(e){var t=e.getResponseHeader("Content-Range");if(null===t)return-1;return parseInt(t.substring(t.lastIndexOf("/")+1))}(i),this.parseChunk(i.responseText)))},this._chunkError=function(e){var t=i.statusText||e;this._sendError(new Error(t))}}function c(e){var i,n;(e=e||{}).chunkSize||(e.chunkSize=b.LocalChunkSize),h.call(this,e);var s="undefined"!=typeof FileReader;this.stream=function(e){this._input=e,n=e.slice||e.webkitSlice||e.mozSlice,s?((i=new FileReader).onload=v(this._chunkLoaded,this),i.onerror=v(this._chunkError,this)):i=new FileReaderSync,this._nextChunk()},this._nextChunk=function(){this._finished||this._config.preview&&!(this._rowCount<this._config.preview)||this._readChunk()},this._readChunk=function(){var e=this._input;if(this._config.chunkSize){var t=Math.min(this._start+this._config.chunkSize,this._input.size);e=n.call(e,this._start,t)}var r=i.readAsText(e,this._config.encoding);s||this._chunkLoaded({target:{result:r}})},this._chunkLoaded=function(e){this._start+=this._config.chunkSize,this._finished=!this._config.chunkSize||this._start>=this._input.size,this.parseChunk(e.target.result)},this._chunkError=function(){this._sendError(i.error)}}function p(e){var r;h.call(this,e=e||{}),this.stream=function(e){return r=e,this._nextChunk()},this._nextChunk=function(){if(!this._finished){var e,t=this._config.chunkSize;return t?(e=r.substring(0,t),r=r.substring(t)):(e=r,r=""),this._finished=!r,this.parseChunk(e)}}}function g(e){h.call(this,e=e||{});var t=[],r=!0,i=!1;this.pause=function(){h.prototype.pause.apply(this,arguments),this._input.pause()},this.resume=function(){h.prototype.resume.apply(this,arguments),this._input.resume()},this.stream=function(e){this._input=e,this._input.on("data",this._streamData),this._input.on("end",this._streamEnd),this._input.on("error",this._streamError)},this._checkIsFinished=function(){i&&1===t.length&&(this._finished=!0)},this._nextChunk=function(){this._checkIsFinished(),t.length?this.parseChunk(t.shift()):r=!0},this._streamData=v(function(e){try{t.push("string"==typeof e?e:e.toString(this._config.encoding)),r&&(r=!1,this._checkIsFinished(),this.parseChunk(t.shift()))}catch(e){this._streamError(e)}},this),this._streamError=v(function(e){this._streamCleanUp(),this._sendError(e)},this),this._streamEnd=v(function(){this._streamCleanUp(),i=!0,this._streamData("")},this),this._streamCleanUp=v(function(){this._input.removeListener("data",this._streamData),this._input.removeListener("end",this._streamEnd),this._input.removeListener("error",this._streamError)},this)}function r(m){var a,o,u,i=Math.pow(2,53),n=-i,s=/^\s*-?(\d+\.?|\.\d+|\d+\.\d+)([eE][-+]?\d+)?\s*$/,h=/^((\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z)))$/,t=this,r=0,f=0,d=!1,e=!1,l=[],c={data:[],errors:[],meta:{}};if(J(m.step)){var p=m.step;m.step=function(e){if(c=e,_())g();else{if(g(),0===c.data.length)return;r+=e.data.length,m.preview&&r>m.preview?o.abort():(c.data=c.data[0],p(c,t))}}}function y(e){return"greedy"===m.skipEmptyLines?""===e.join("").trim():1===e.length&&0===e[0].length}function g(){return c&&u&&(k("Delimiter","UndetectableDelimiter","Unable to auto-detect delimiting character; defaulted to '"+b.DefaultDelimiter+"'"),u=!1),m.skipEmptyLines&&(c.data=c.data.filter(function(e){return!y(e)})),_()&&function(){if(!c)return;function e(e,t){J(m.transformHeader)&&(e=m.transformHeader(e,t)),l.push(e)}if(Array.isArray(c.data[0])){for(var t=0;_()&&t<c.data.length;t++)c.data[t].forEach(e);c.data.splice(0,1)}else c.data.forEach(e)}(),function(){if(!c||!m.header&&!m.dynamicTyping&&!m.transform)return c;function e(e,t){var r,i=m.header?{}:[];for(r=0;r<e.length;r++){var n=r,s=e[r];m.header&&(n=r>=l.length?"__parsed_extra":l[r]),m.transform&&(s=m.transform(s,n)),s=v(n,s),"__parsed_extra"===n?(i[n]=i[n]||[],i[n].push(s)):i[n]=s}return m.header&&(r>l.length?k("FieldMismatch","TooManyFields","Too many fields: expected "+l.length+" fields but parsed "+r,f+t):r<l.length&&k("FieldMismatch","TooFewFields","Too few fields: expected "+l.length+" fields but parsed "+r,f+t)),i}var t=1;!c.data.length||Array.isArray(c.data[0])?(c.data=c.data.map(e),t=c.data.length):c.data=e(c.data,0);m.header&&c.meta&&(c.meta.fields=l);return f+=t,c}()}function _(){return m.header&&0===l.length}function v(e,t){return r=e,m.dynamicTypingFunction&&void 0===m.dynamicTyping[r]&&(m.dynamicTyping[r]=m.dynamicTypingFunction(r)),!0===(m.dynamicTyping[r]||m.dynamicTyping)?"true"===t||"TRUE"===t||"false"!==t&&"FALSE"!==t&&(function(e){if(s.test(e)){var t=parseFloat(e);if(n<t&&t<i)return!0}return!1}(t)?parseFloat(t):h.test(t)?new Date(t):""===t?null:t):t;var r}function k(e,t,r,i){var n={type:e,code:t,message:r};void 0!==i&&(n.row=i),c.errors.push(n)}this.parse=function(e,t,r){var i=m.quoteChar||'"';if(m.newline||(m.newline=function(e,t){e=e.substring(0,1048576);var r=new RegExp(Q(t)+"([^]*?)"+Q(t),"gm"),i=(e=e.replace(r,"")).split("\r"),n=e.split("\n"),s=1<n.length&&n[0].length<i[0].length;if(1===i.length||s)return"\n";for(var a=0,o=0;o<i.length;o++)"\n"===i[o][0]&&a++;return a>=i.length/2?"\r\n":"\r"}(e,i)),u=!1,m.delimiter)J(m.delimiter)&&(m.delimiter=m.delimiter(e),c.meta.delimiter=m.delimiter);else{var n=function(e,t,r,i,n){var s,a,o,u;n=n||[",","\t","|",";",b.RECORD_SEP,b.UNIT_SEP];for(var h=0;h<n.length;h++){var f=n[h],d=0,l=0,c=0;o=void 0;for(var p=new E({comments:i,delimiter:f,newline:t,preview:10}).parse(e),g=0;g<p.data.length;g++)if(r&&y(p.data[g]))c++;else{var _=p.data[g].length;l+=_,void 0!==o?0<_&&(d+=Math.abs(_-o),o=_):o=_}0<p.data.length&&(l/=p.data.length-c),(void 0===a||d<=a)&&(void 0===u||u<l)&&1.99<l&&(a=d,s=f,u=l)}return{successful:!!(m.delimiter=s),bestDelimiter:s}}(e,m.newline,m.skipEmptyLines,m.comments,m.delimitersToGuess);n.successful?m.delimiter=n.bestDelimiter:(u=!0,m.delimiter=b.DefaultDelimiter),c.meta.delimiter=m.delimiter}var s=w(m);return m.preview&&m.header&&s.preview++,a=e,o=new E(s),c=o.parse(a,t,r),g(),d?{meta:{paused:!0}}:c||{meta:{paused:!1}}},this.paused=function(){return d},this.pause=function(){d=!0,o.abort(),a=J(m.chunk)?"":a.substring(o.getCharIndex())},this.resume=function(){t.streamer._halted?(d=!1,t.streamer.parseChunk(a,!0)):setTimeout(t.resume,3)},this.aborted=function(){return e},this.abort=function(){e=!0,o.abort(),c.meta.aborted=!0,J(m.complete)&&m.complete(c),a=""}}function Q(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}function E(j){var z,M=(j=j||{}).delimiter,P=j.newline,U=j.comments,q=j.step,N=j.preview,B=j.fastMode,K=z=void 0===j.quoteChar||null===j.quoteChar?'"':j.quoteChar;if(void 0!==j.escapeChar&&(K=j.escapeChar),("string"!=typeof M||-1<b.BAD_DELIMITERS.indexOf(M))&&(M=","),U===M)throw new Error("Comment character same as delimiter");!0===U?U="#":("string"!=typeof U||-1<b.BAD_DELIMITERS.indexOf(U))&&(U=!1),"\n"!==P&&"\r"!==P&&"\r\n"!==P&&(P="\n");var W=0,H=!1;this.parse=function(i,t,r){if("string"!=typeof i)throw new Error("Input must be a string");var n=i.length,e=M.length,s=P.length,a=U.length,o=J(q),u=[],h=[],f=[],d=W=0;if(!i)return L();if(j.header&&!t){var l=i.split(P)[0].split(M),c=[],p={},g=!1;for(var _ in l){var m=l[_];J(j.transformHeader)&&(m=j.transformHeader(m,_));var y=m,v=p[m]||0;for(0<v&&(g=!0,y=m+"_"+v),p[m]=v+1;c.includes(y);)y=y+"_"+v;c.push(y)}if(g){var k=i.split(P);k[0]=c.join(M),i=k.join(P)}}if(B||!1!==B&&-1===i.indexOf(z)){for(var b=i.split(P),E=0;E<b.length;E++){if(f=b[E],W+=f.length,E!==b.length-1)W+=P.length;else if(r)return L();if(!U||f.substring(0,a)!==U){if(o){if(u=[],I(f.split(M)),F(),H)return L()}else I(f.split(M));if(N&&N<=E)return u=u.slice(0,N),L(!0)}}return L()}for(var w=i.indexOf(M,W),R=i.indexOf(P,W),C=new RegExp(Q(K)+Q(z),"g"),S=i.indexOf(z,W);;)if(i[W]!==z)if(U&&0===f.length&&i.substring(W,W+a)===U){if(-1===R)return L();W=R+s,R=i.indexOf(P,W),w=i.indexOf(M,W)}else if(-1!==w&&(w<R||-1===R))f.push(i.substring(W,w)),W=w+e,w=i.indexOf(M,W);else{if(-1===R)break;if(f.push(i.substring(W,R)),D(R+s),o&&(F(),H))return L();if(N&&u.length>=N)return L(!0)}else for(S=W,W++;;){if(-1===(S=i.indexOf(z,S+1)))return r||h.push({type:"Quotes",code:"MissingQuotes",message:"Quoted field unterminated",row:u.length,index:W}),T();if(S===n-1)return T(i.substring(W,S).replace(C,z));if(z!==K||i[S+1]!==K){if(z===K||0===S||i[S-1]!==K){-1!==w&&w<S+1&&(w=i.indexOf(M,S+1)),-1!==R&&R<S+1&&(R=i.indexOf(P,S+1));var O=A(-1===R?w:Math.min(w,R));if(i.substr(S+1+O,e)===M){f.push(i.substring(W,S).replace(C,z)),i[W=S+1+O+e]!==z&&(S=i.indexOf(z,W)),w=i.indexOf(M,W),R=i.indexOf(P,W);break}var x=A(R);if(i.substring(S+1+x,S+1+x+s)===P){if(f.push(i.substring(W,S).replace(C,z)),D(S+1+x+s),w=i.indexOf(M,W),S=i.indexOf(z,W),o&&(F(),H))return L();if(N&&u.length>=N)return L(!0);break}h.push({type:"Quotes",code:"InvalidQuotes",message:"Trailing quote on quoted field is malformed",row:u.length,index:W}),S++}}else S++}return T();function I(e){u.push(e),d=W}function A(e){var t=0;if(-1!==e){var r=i.substring(S+1,e);r&&""===r.trim()&&(t=r.length)}return t}function T(e){return r||(void 0===e&&(e=i.substring(W)),f.push(e),W=n,I(f),o&&F()),L()}function D(e){W=e,I(f),f=[],R=i.indexOf(P,W)}function L(e){return{data:u,errors:h,meta:{delimiter:M,linebreak:P,aborted:H,truncated:!!e,cursor:d+(t||0)}}}function F(){q(L()),u=[],h=[]}},this.abort=function(){H=!0},this.getCharIndex=function(){return W}}function _(e){var t=e.data,r=a[t.workerId],i=!1;if(t.error)r.userError(t.error,t.file);else if(t.results&&t.results.data){var n={abort:function(){i=!0,m(t.workerId,{data:[],errors:[],meta:{aborted:!0}})},pause:y,resume:y};if(J(r.userStep)){for(var s=0;s<t.results.data.length&&(r.userStep({data:t.results.data[s],errors:t.results.errors,meta:t.results.meta},n),!i);s++);delete t.results}else J(r.userChunk)&&(r.userChunk(t.results,n,t.file),delete t.results)}t.finished&&!i&&m(t.workerId,t.results)}function m(e,t){var r=a[e];J(r.userComplete)&&r.userComplete(t),r.terminate(),delete a[e]}function y(){throw new Error("Not implemented.")}function w(e){if("object"!=typeof e||null===e)return e;var t=Array.isArray(e)?[]:{};for(var r in e)t[r]=w(e[r]);return t}function v(e,t){return function(){e.apply(t,arguments)}}function J(e){return"function"==typeof e}return o&&(f.onmessage=function(e){var t=e.data;void 0===b.WORKER_ID&&t&&(b.WORKER_ID=t.workerId);if("string"==typeof t.input)f.postMessage({workerId:b.WORKER_ID,results:b.parse(t.input,t.config),finished:!0});else if(f.File&&t.input instanceof File||t.input instanceof Object){var r=b.parse(t.input,t.config);r&&f.postMessage({workerId:b.WORKER_ID,results:r,finished:!0})}}),(l.prototype=Object.create(h.prototype)).constructor=l,(c.prototype=Object.create(h.prototype)).constructor=c,(p.prototype=Object.create(p.prototype)).constructor=p,(g.prototype=Object.create(h.prototype)).constructor=g,b});
+</script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+    onerror="window._sheetjs_ok=false"
+    onload="window._sheetjs_ok=true"></script>
+<style>
+:root {
+    --bg: #f8fafc; --card: #fff; --border: #e2e8f0;
+    --text: #1e293b; --muted: #64748b; --accent: #2563eb;
+    --danger: #dc2626; --warn: #f59e0b; --success: #16a34a;
+    --header: #f1f5f9; --shadow: 0 1px 3px rgba(0,0,0,0.08); --r: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 10px; }
+.btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--r); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.btn:hover { background: #f1f5f9; }
+.btn-a { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-a:hover { background: #1d4ed8; }
+.btn-s { padding: 3px 8px; font-size: 10px; }
+select, input[type=text], input[type=date] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--card); }
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+
+.upload-zone {
+    background: var(--card); border: 2px dashed var(--border); border-radius: var(--r);
+    padding: 30px; text-align: center; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: #f0f7ff; }
+.upload-zone h2 { font-size: 18px; margin-bottom: 4px; }
+.upload-zone p { font-size: 12px; color: var(--muted); }
+.upload-zone input { display: none; }
+.upload-zone.loaded { border-style: solid; border-color: var(--success); background: #f0fdf4; padding: 12px 20px; text-align: left; }
+
+.header { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; box-shadow: var(--shadow); }
+.header .info { font-size: 11px; color: var(--muted); }
+
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 14px; box-shadow: var(--shadow); }
+.panel h3 { font-size: 13px; margin-bottom: 6px; }
+
+/* Sort level */
+.sort-level { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: #f8fafc; border-radius: 4px; margin-bottom: 4px; font-size: 11px; flex-wrap: wrap; border: 1px solid transparent; transition: border-color 0.15s; }
+.sort-level:hover { border-color: var(--border); }
+.sort-level .drag-handle { cursor: grab; color: var(--muted); font-size: 14px; padding: 0 2px; user-select: none; }
+.sort-level .drag-handle:active { cursor: grabbing; }
+.sort-level .rank { font-weight: 700; color: var(--accent); min-width: 14px; font-size: 11px; }
+.sort-level select { font-size: 11px; min-width: 70px; }
+.sort-level input[type=text] { font-size: 11px; width: 80px; }
+.sort-level .mode-sel { min-width: 50px; }
+.sort-level .type-badge { font-size: 9px; padding: 1px 5px; border-radius: 8px; background: #e2e8f0; color: var(--muted); white-space: nowrap; }
+
+.tgl { padding: 2px 8px; border-radius: 3px; font-size: 10px; border: 1px solid var(--border); cursor: pointer; font-weight: 600; }
+.tgl.on { background: #dcfce7; color: #166534; border-color: #86efac; }
+.tgl.off { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+.chips { display: flex; gap: 3px; flex-wrap: wrap; }
+.chip { padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: #f1f5f9; font-size: 10px; cursor: grab; user-select: none; }
+.chip:active { cursor: grabbing; }
+.chip.drag-over { border-color: var(--accent); background: #dbeafe; }
+
+.sort-level.drag-over { border-color: var(--accent); background: #e8f0fe; }
+.sort-level.dragging { opacity: 0.4; }
+
+/* Exceptions */
+.ex-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 11px; }
+.ex-row .ex-val { font-family: monospace; font-weight: 600; }
+.ex-row .ex-reason { color: var(--muted); flex: 1; }
+.ex-row .ex-del { cursor: pointer; color: var(--danger); font-weight: 700; }
+.ex-add { display: flex; gap: 4px; margin-top: 4px; }
+.ex-add input { flex: 1; min-width: 60px; font-size: 11px; }
+
+/* Table */
+.table-container { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
+.table-scroll { overflow: auto; max-height: 45vh; }
+table { width: max-content; border-collapse: collapse; font-size: 11px; min-width: 100%; }
+thead { position: sticky; top: 0; z-index: 10; }
+th { background: var(--header); padding: 6px 8px; text-align: left; font-weight: 600; font-size: 10px; color: var(--muted); text-transform: uppercase; border-bottom: 2px solid var(--border); white-space: nowrap; min-width: 50px; cursor: default; }
+td { padding: 4px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tr:hover { background: #f8fafc; }
+tr.row-top { background: #fef2f2; border-left: 3px solid var(--danger); }
+tr.row-bottom { background: #f0fdf4; border-left: 3px solid var(--success); }
+tr.row-ov { background: #faf5ff; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px; border-top: 1px solid var(--border); }
+.pagination button { padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); font-size: 11px; cursor: pointer; }
+.pagination button.active { background: var(--accent); color: #fff; }
+#no-data { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+@media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+<body>
+
+<div class="upload-zone" id="upload-zone">
+    <h2>📁 拖拽文件到此处，或点击「选择文件」</h2>
+    <p>支持 CSV / Excel(.xlsx .xls) / JSON — CSV 完全离线可用，Excel 需联网加载组件
+    <br><button class="btn btn-a" style="margin-top:8px;" onclick="loadFromOMS()">📡 从 OMS 加载最新数据</button></p>
+    <label class="btn btn-a" style="margin-top:10px;cursor:pointer;display:inline-block;">
+        选择文件
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" onchange="handleFile(this.files[0])" style="display:none;">
+    </label>
+</div>
+
+<div class="header" id="toolbar" style="display:none;">
+    <span class="info">📊 <strong id="data-name">-</strong> · <span id="row-total">-</span> 行 · <span id="col-count">-</span> 列</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="resetAll()">🔄 重置</button>
+        <button class="btn btn-s" onclick="exportData('csv')">📥 CSV</button>
+        <button class="btn btn-s" onclick="exportData('excel')">📊 Excel</button>
+        <button class="btn btn-s" onclick="saveConfig()">💾 保存方案</button>
+        <button class="btn btn-s" onclick="loadConfig()">📂 加载方案</button>
+    </div>
+</div>
+
+<div id="main-ui" style="display:none;">
+<div class="panels">
+    <div class="panel">
+        <h3>🔗 排序链 <span style="font-size:10px;color:var(--muted);font-weight:400;">· 拖拽 ≡ 调整层级顺序</span></h3>
+        <div id="sort-levels"></div>
+        <button class="btn btn-s btn-a" onclick="addSortLevel()" style="margin-top:4px;">+ 添加排序层</button>
+    </div>
+
+    <div class="panel">
+        <h3>⚡ 例外管理</h3>
+        <div style="font-size:11px;margin-bottom:4px;">标识列: <select id="ex-id-col" onchange="onExIdColChange()" style="font-size:11px;"></select></div>
+        <div style="margin-bottom:4px;">
+            <strong style="font-size:11px;">🔴 强制置顶</strong>
+            <div id="top-list" style="max-height:80px;overflow-y:auto;"></div>
+            <div class="ex-add">
+                <input placeholder="值，多个用逗号分隔" id="top-val" style="width:130px;">
+                <input placeholder="原因" id="top-reason" style="width:80px;">
+                <button class="btn btn-s btn-a" onclick="addEx('top')">置顶</button>
+            </div>
+        </div>
+        <div style="margin-bottom:4px;">
+            <strong style="font-size:11px;">📅 值覆盖（排序用新值，原值保留）</strong>
+            <div id="ov-list" style="max-height:80px;overflow-y:auto;"></div>
+            <button class="btn btn-s" onclick="showOvDialog()" style="margin-top:2px;">+ 添加覆盖</button>
+        </div>
+        <div>
+            <strong style="font-size:11px;">🟢 强制置底</strong>
+            <div id="bottom-list" style="max-height:80px;overflow-y:auto;"></div>
+            <div class="ex-add">
+                <input placeholder="值，多个用逗号分隔" id="bottom-val" style="width:130px;">
+                <input placeholder="原因" id="bottom-reason" style="width:80px;">
+                <button class="btn btn-s" onclick="addEx('bottom')">置底</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-scroll" id="table-scroll">
+        <table><thead id="table-head"></thead><tbody id="table-body"></tbody></table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+</div>
+</div>
+
+<div class="table-container" id="no-data">
+    <p>👆 上传文件开始使用</p>
+</div>
+
+<!-- Override Dialog -->
+<div id="ov-dialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:100;align-items:center;justify-content:center;">
+<div style="background:var(--card);border-radius:var(--r);padding:20px;min-width:350px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+    <h3 style="margin-bottom:10px;">📅 值覆盖</h3>
+    <div style="margin-bottom:6px;"><label style="font-size:11px;">标识值: <input id="ov-id" style="width:140px;"></label></div>
+    <div style="margin-bottom:6px;"><label style="font-size:11px;">覆盖列: <select id="ov-col" style="font-size:11px;"></select></label></div>
+    <div style="margin-bottom:6px;"><label style="font-size:11px;">新值: <input id="ov-new-val"></label></div>
+    <div style="margin-bottom:6px;"><label style="font-size:11px;">原因: <input id="ov-reason"></label></div>
+    <button class="btn btn-a" onclick="addOverride()">确认</button>
+    <button class="btn" onclick="document.getElementById('ov-dialog').style.display='none'" style="margin-left:6px;">取消</button>
+</div></div>
+
+<script>
+// ── State ────────────────────────────────────────────────
+let rawData = [], columns = [], idCol = '';
+let sortLevels = [];
+let exceptions = {top:[], bottom:[], overrides:[]};
+let currentPage = 1;
+const PAGE_SIZE = 100;
+
+// ── Smart type detection ─────────────────────────────────
+const DATE_PATTERNS = [
+    /^\d{4}-\d{2}-\d{2}$/, /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/,
+    /^\d{2}\/\d{2}\/\d{4}$/, /^\d{1,2}\/\d{1,2}\/\d{4}$/,
+    /^\d{4}\/\d{2}\/\d{2}$/, /^\d{2}-\d{2}-\d{4}$/,
+    /^\d{4}\.\d{2}\.\d{2}$/,
+];
+
+function detectType(col) {
+    const samples = rawData.slice(0, 50).map(r => (r[col]||'').toString().trim()).filter(Boolean);
+    if (!samples.length) return 'text';
+    // Check date
+    const dateCount = samples.filter(s => DATE_PATTERNS.some(p => p.test(s)) && !isNaN(Date.parse(s))).length;
+    if (dateCount >= samples.length * 0.7) return 'date';
+    // Check number
+    const numCount = samples.filter(s => !isNaN(parseFloat(s)) && isFinite(s)).length;
+    if (numCount >= samples.length * 0.7) return 'number';
+    return 'text';
+}
+
+function parseVal(v, type) {
+    const s = (v||'').toString().trim();
+    if (!s) return null;
+    if (type === 'number') { const n = parseFloat(s); return isNaN(n) ? null : n; }
+    if (type === 'date') { const d = Date.parse(s); return isNaN(d) ? null : d; }
+    return s.toLowerCase();
+}
+
+function getTypeLabel(type) { return type==='date'?'📅日期':type==='number'?'🔢数字':'📝文本'; }
+
+// ── File handling ────────────────────────────────────────
+const dropZone = document.getElementById('upload-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0]; if (f) handleFile(f);
+});
+
+function handleFile(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let data;
+        if (ext === 'csv') {
+            const r = Papa.parse(e.target.result, {header: true, skipEmptyLines: true, encoding: 'UTF-8'});
+            data = r.data;
+        } else if (ext === 'json') {
+            try {
+                const p = JSON.parse(e.target.result);
+                data = Array.isArray(p) ? p : (p.data || p.ResultData || p.rows || []);
+            } catch(err) { alert('JSON 解析失败: '+err.message); return; }
+        } else if (ext === 'xlsx' || ext === 'xls') {
+            if (typeof XLSX === 'undefined') { alert('Excel 功能需要联网加载组件。\n\n请连接网络后刷新页面，或使用 CSV 格式。'); return; }
+            const wb = XLSX.read(e.target.result, {type: 'array'});
+            data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ''});
+        } else { alert('不支持: '+ext); return; }
+        if (!data || !data.length) { alert('文件中没有数据'); return; }
+        initData(data, file.name);
+    };
+    if (ext==='xlsx'||ext==='xls') reader.readAsArrayBuffer(file);
+    else reader.readAsText(file, 'UTF-8');
+}
+
+function initData(data, filename) {
+    rawData = data.map(r => { const o={}; for(const k in r) o[k]=r[k]!==null&&r[k]!==undefined?String(r[k]).trim():''; return o; });
+    columns = Object.keys(rawData[0]);
+    idCol = columns[0];
+    sortLevels = [];
+    exceptions = {top:[], bottom:[], overrides:[]};
+
+    // ── 4 smart defaults ──────────────────────────────────
+    // Find best column for each level by type heuristics
+    const dateCols = columns.filter(c => detectType(c) === 'date');
+    const textCols = columns.filter(c => detectType(c) === 'text');
+    const numCols = columns.filter(c => detectType(c) === 'number');
+
+    // Count distinct values (for grouping potential)
+    function distinctCount(col) {
+        return new Set(rawData.map(r => (r[col]||'').toString().trim()).filter(Boolean)).size;
+    }
+    // Best categorical column for grouping (3-30 distinct values)
+    const catCols = textCols.filter(c => { const n = distinctCount(c); return n >= 2 && n <= 30; });
+    const fewValCols = textCols.filter(c => { const n = distinctCount(c); return n >= 2 && n <= 8; });
+
+    // ① 分类分组 — best categorical column
+    const grpCol = catCols[0] || textCols[0] || columns[0];
+    const grpMode = catCols.length > 0 ? 'group' : 'sort';
+    sortLevels.push({col: grpCol, dir: 'asc', enabled: true, mode: grpMode, type: 'text', groups: []});
+
+    // ② 日期排序 — first date column
+    if (dateCols[0]) {
+        sortLevels.push({col: dateCols[0], dir: 'asc', enabled: true, mode: 'sort', type: 'date', groups: []});
+    } else if (numCols[0]) {
+        sortLevels.push({col: numCols[0], dir: 'asc', enabled: true, mode: 'sort', type: 'number', groups: []});
+    } else if (textCols[0] && textCols[0] !== grpCol) {
+        sortLevels.push({col: textCols[0], dir: 'asc', enabled: true, mode: 'sort', type: 'text', groups: []});
+    }
+
+    // ③ 第二个日期或数字列
+    if (dateCols[1]) {
+        sortLevels.push({col: dateCols[1], dir: 'asc', enabled: true, mode: 'sort', type: 'date', groups: []});
+    } else if (numCols[0] && dateCols[0] !== numCols[0]) {
+        sortLevels.push({col: numCols[0], dir: 'asc', enabled: true, mode: 'sort', type: 'number', groups: []});
+    }
+
+    // ④ 枚举列 — best column with few values (like ship mode)
+    if (fewValCols[0]) {
+        const fc = fewValCols[0];
+        sortLevels.push({col: fc, dir: 'asc', enabled: true, mode: 'group', type: 'text', groups: []});
+    } else if (textCols.length > 1 && textCols[1]) {
+        sortLevels.push({col: textCols[1], dir: 'asc', enabled: true, mode: 'sort', type: 'text', groups: []});
+    }
+    document.getElementById('data-name').textContent = filename;
+    document.getElementById('row-total').textContent = rawData.length.toLocaleString();
+    document.getElementById('col-count').textContent = columns.length;
+    document.getElementById('upload-zone').classList.add('loaded');
+    document.getElementById('upload-zone').innerHTML = `<strong>✅ ${filename}</strong> · ${rawData.length.toLocaleString()} 行 · ${columns.length} 列 · <a href="#" onclick="location.reload()" style="color:var(--accent);">重新上传</a>`;
+    document.getElementById('toolbar').style.display = 'flex';
+    document.getElementById('main-ui').style.display = 'block';
+    document.getElementById('no-data').style.display = 'none';
+    populateIdColSelect();
+    renderAll();
+}
+
+// ── Sort levels UI ───────────────────────────────────────
+function populateIdColSelect() {
+    document.getElementById('ex-id-col').innerHTML = columns.map(c => `<option value="${c}" ${c===idCol?'selected':''}>${c}</option>`).join('');
+}
+function onExIdColChange() { idCol = document.getElementById('ex-id-col').value; renderAll(); }
+
+function renderSortLevels() {
+    const container = document.getElementById('sort-levels');
+    let h = '';
+    sortLevels.forEach((sl, i) => {
+        const typeLabel = getTypeLabel(sl.type);
+        h += `<div class="sort-level" draggable="true" data-sortidx="${i}">
+            <span class="drag-handle" title="拖拽调整层级">≡</span>
+            <span class="rank">${i+1}</span>
+            <select onchange="onLevelColChange(${i}, this.value)" title="排序列">${columns.map(c => `<option value="${c}" ${sl.col===c?'selected':''}>${c}</option>`).join('')}</select>
+            <select class="mode-sel" onchange="onLevelModeChange(${i}, this.value)" title="排序模式">
+                <option value="sort" ${sl.mode==='sort'?'selected':''}>排序</option>
+                <option value="group" ${sl.mode==='group'?'selected':''}>分组</option>
+            </select>`;
+        if (sl.mode === 'group') {
+            h += `<div class="chips" id="groups-${i}"></div>`;
+        }
+        h += `<span class="type-badge">${typeLabel}</span>
+            <select onchange="sortLevels[${i}].dir=this.value;applySort()" style="min-width:44px;" title="方向">
+                <option value="asc" ${sl.dir==='asc'?'selected':''}>↑</option>
+                <option value="desc" ${sl.dir==='desc'?'selected':''}>↓</option>
+            </select>
+            <span class="tgl ${sl.enabled!==false?'on':'off'}" onclick="toggleLevel(${i})">${sl.enabled!==false?'启用':'关闭'}</span>
+            <span style="cursor:pointer;color:var(--danger);" onclick="removeLevel(${i})" title="删除">✕</span>
+        </div>`;
+    });
+    if (!sortLevels.length) h = '<div style="font-size:11px;color:var(--muted);padding:4px;">暂无排序层 — 按原始顺序</div>';
+    container.innerHTML = h;
+    setupLevelDrag();
+    // Render group chips
+    sortLevels.forEach((sl, i) => {
+        if (sl.mode === 'group') {
+            const gc = document.getElementById('groups-'+i);
+            if (gc) renderGroupChips(gc, sl, i);
+        }
+    });
+}
+
+function renderGroupChips(gc, sl, idx) {
+    if (!sl.groups || !sl.groups.length) {
+        const vals = [...new Set(rawData.map(r => (r[sl.col]||'').toString().trim()).filter(Boolean))];
+        sl.groups = vals.sort((a,b) => a.localeCompare(b, 'zh'));
+    }
+    gc.innerHTML = sl.groups.map((g, gi) => `<span class="chip" draggable="true" data-gidx="${gi}">${g||'(空)'}</span>`).join('');
+    setupChipDrag(gc, (fromIdx, toIdx) => {
+        const [moved] = sortLevels[idx].groups.splice(fromIdx, 1);
+        sortLevels[idx].groups.splice(toIdx, 0, moved);
+        renderSortLevels();
+        applySort();
+    });
+}
+
+function onLevelColChange(idx, newCol) {
+    const sl = sortLevels[idx];
+    sl.col = newCol;
+    sl.type = detectType(newCol);
+    if (sl.mode === 'group') sl.groups = [];
+    renderSortLevels();
+    applySort();
+}
+
+function onLevelModeChange(idx, newMode) {
+    const sl = sortLevels[idx];
+    sl.mode = newMode;
+    if (newMode === 'group') {
+        if (!sl.groups || !sl.groups.length) {
+            sl.groups = [...new Set(rawData.map(r => (r[sl.col]||'').toString().trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'zh'));
+        }
+    } else {
+        sl.groups = [];
+    }
+    renderSortLevels();
+    applySort();
+}
+
+function addSortLevel() {
+    const col = columns[0];
+    sortLevels.push({col, dir: 'asc', enabled: true, mode: 'sort', type: detectType(col), groups: []});
+    renderSortLevels();
+    applySort();
+}
+
+function removeLevel(i) { sortLevels.splice(i, 1); renderSortLevels(); applySort(); }
+
+function toggleLevel(i) {
+    sortLevels[i].enabled = sortLevels[i].enabled === false ? true : false;
+    renderSortLevels();
+    applySort();
+}
+
+// ── Level drag reorder ──────────────────────────────────
+function setupLevelDrag() {
+    document.querySelectorAll('#sort-levels .sort-level').forEach(el => {
+        el.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', el.dataset.sortidx);
+            el.classList.add('dragging');
+        });
+        el.addEventListener('dragend', e => { el.classList.remove('dragging'); });
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragleave', e => { el.classList.remove('drag-over'); });
+        el.addEventListener('drop', e => {
+            e.preventDefault(); el.classList.remove('drag-over');
+            const from = parseInt(e.dataTransfer.getData('text/plain'));
+            const to = parseInt(el.dataset.sortidx);
+            if (!isNaN(from) && !isNaN(to) && from !== to) {
+                const [moved] = sortLevels.splice(from, 1);
+                sortLevels.splice(to, 0, moved);
+                renderSortLevels();
+                applySort();
+            }
+        });
+    });
+}
+
+// ── Chip drag (generic) ──────────────────────────────────
+function setupChipDrag(container, callback) {
+    container.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', e.target.dataset.gidx); e.target.style.opacity='0.5'; });
+        chip.addEventListener('dragend', e => { e.target.style.opacity='1'; });
+        chip.addEventListener('dragover', e => { e.preventDefault(); e.target.classList.add('drag-over'); });
+        chip.addEventListener('dragleave', e => { e.target.classList.remove('drag-over'); });
+        chip.addEventListener('drop', e => {
+            e.preventDefault(); e.target.classList.remove('drag-over');
+            const from = parseInt(e.dataTransfer.getData('text/plain'));
+            const to = parseInt(e.target.dataset.gidx);
+            if (!isNaN(from) && !isNaN(to) && from !== to) callback(from, to);
+        });
+    });
+}
+
+// ── Sort engine ──────────────────────────────────────────
+function applySort() {
+    currentPage = 1;
+    // renderSortLevels() is called by each action handler explicitly
+    renderTable();
+}
+
+function getSortedData() {
+    let data = [...rawData];
+    const active = sortLevels.filter(sl => sl.enabled !== false);
+    if (!active.length) return data;
+
+    data.sort((a, b) => {
+        for (const sl of active) {
+            let va = (a[sl.col]||'').toString().trim();
+            let vb = (b[sl.col]||'').toString().trim();
+
+            if (sl.mode === 'group' && sl.groups && sl.groups.length) {
+                const ia = sl.groups.indexOf(va), ib = sl.groups.indexOf(vb);
+                const ra = ia >= 0 ? ia : 999, rb = ib >= 0 ? ib : 999;
+                if (ra !== rb) return ra - rb;
+                continue;
+            }
+
+            // Smart comparison using detected type
+            const pa = parseVal(va, sl.type), pb = parseVal(vb, sl.type);
+            let cmp = 0;
+            if (pa === null && pb === null) cmp = 0;
+            else if (pa === null) cmp = 1;
+            else if (pb === null) cmp = -1;
+            else if (sl.type === 'number' || sl.type === 'date') cmp = pa - pb;
+            else cmp = String(pa).localeCompare(String(pb), 'zh');
+
+            if (cmp !== 0) return sl.dir === 'asc' ? cmp : -cmp;
+        }
+        return 0;
+    });
+
+    // Exceptions
+    const topSet = new Set(exceptions.top.map(e => e.val));
+    const botSet = new Set(exceptions.bottom.map(e => e.val));
+    const topItems = data.filter(r => topSet.has((r[idCol]||'').toString().trim()));
+    const botItems = data.filter(r => botSet.has((r[idCol]||'').toString().trim()) && !topSet.has((r[idCol]||'').toString().trim()));
+    const midItems = data.filter(r => !topSet.has((r[idCol]||'').toString().trim()) && !botSet.has((r[idCol]||'').toString().trim()));
+    return [...topItems, ...midItems, ...botItems];
+}
+
+// ── Exceptions ───────────────────────────────────────────
+function addEx(type) {
+    const raw = document.getElementById(type+'-val').value.trim();
+    const reason = document.getElementById(type+'-reason').value.trim();
+    if (!raw) return;
+    raw.split(/[\n,，\s]+/).filter(Boolean).forEach(v => {
+        const arr = exceptions[type];
+        const idx = arr.findIndex(e => e.val === v);
+        if (idx >= 0) arr.splice(idx, 1);
+        arr.push({val: v, reason, time: new Date().toLocaleString()});
+    });
+    document.getElementById(type+'-val').value = '';
+    document.getElementById(type+'-reason').value = '';
+    renderAll();
+}
+function removeEx(type, val) { exceptions[type] = exceptions[type].filter(e => e.val !== val); renderAll(); }
+function showOvDialog() {
+    document.getElementById('ov-col').innerHTML = columns.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('ov-dialog').style.display = 'flex';
+}
+function addOverride() {
+    const idVal = document.getElementById('ov-id').value.trim();
+    const col = document.getElementById('ov-col').value;
+    const newVal = document.getElementById('ov-new-val').value.trim();
+    const reason = document.getElementById('ov-reason').value.trim();
+    if (!idVal || !newVal) return;
+    const key = `${idVal}_${col}`;
+    exceptions.overrides = exceptions.overrides.filter(e => `${e.idVal}_${e.col}` !== key);
+    exceptions.overrides.push({idVal, col, newVal, reason, time: new Date().toLocaleString()});
+    document.getElementById('ov-dialog').style.display = 'none';
+    document.getElementById('ov-id').value = document.getElementById('ov-new-val').value = document.getElementById('ov-reason').value = '';
+    renderAll();
+}
+function removeOv(idVal, col) {
+    exceptions.overrides = exceptions.overrides.filter(e => `${e.idVal}_${e.col}` !== `${idVal}_${col}`);
+    renderAll();
+}
+
+function renderExLists() {
+    document.getElementById('top-list').innerHTML = exceptions.top.map(e => `<div class="ex-row"><span class="ex-val">${e.val}</span> <span class="ex-reason">${e.reason||''}</span><span class="ex-del" onclick="removeEx('top','${e.val.replace(/'/g,"\\'")}')">✕</span></div>`).join('') || '<div style="font-size:10px;color:var(--muted);">无</div>';
+    document.getElementById('bottom-list').innerHTML = exceptions.bottom.map(e => `<div class="ex-row"><span class="ex-val">${e.val}</span> <span class="ex-reason">${e.reason||''}</span><span class="ex-del" onclick="removeEx('bottom','${e.val.replace(/'/g,"\\'")}')">✕</span></div>`).join('') || '<div style="font-size:10px;color:var(--muted);">无</div>';
+    document.getElementById('ov-list').innerHTML = exceptions.overrides.map(e => `<div class="ex-row"><span class="ex-val">${e.idVal}</span> · ${e.col} → <b>${e.newVal}</b> <span class="ex-reason">${e.reason||''}</span><span class="ex-del" onclick="removeOv('${e.idVal.replace(/'/g,"\\'")}','${e.col}')">✕</span></div>`).join('') || '<div style="font-size:10px;color:var(--muted);">无</div>';
+}
+
+// ── Table ────────────────────────────────────────────────
+function renderAll() { renderSortLevels(); renderExLists(); renderTable(); }
+
+function renderTable() {
+    const sorted = getSortedData();
+    const total = sorted.length;
+    const pages = Math.ceil(total / PAGE_SIZE);
+    if (currentPage > pages) currentPage = Math.max(1, pages);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = sorted.slice(start, start + PAGE_SIZE);
+
+    const topSet = new Set(exceptions.top.map(e => e.val));
+    const botSet = new Set(exceptions.bottom.map(e => e.val));
+    const ovMap = {}; exceptions.overrides.forEach(e => { ovMap[`${e.idVal}_${e.col}`] = e; });
+
+    document.getElementById('table-head').innerHTML = '<tr><th style="width:30px;">#</th>' + columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+
+    const tbody = document.getElementById('table-body');
+    let h = '';
+    for (let i = 0; i < page.length; i++) {
+        const r = page[i], idVal = (r[idCol]||'').toString().trim();
+        const isTop = topSet.has(idVal), isBot = botSet.has(idVal);
+        let cls = ''; if (isTop && isBot) cls = 'row-top row-bottom'; else if (isTop) cls = 'row-top'; else if (isBot) cls = 'row-bottom';
+        const hasOv = columns.some(c => ovMap[`${idVal}_${c}`]);
+        if (hasOv && !isTop && !isBot) cls += ' row-ov';
+        h += `<tr class="${cls}"><td style="color:var(--muted);font-size:10px;">${start+i+1}</td>`;
+        for (const c of columns) {
+            let v = r[c]||''; const ov = ovMap[`${idVal}_${c}`];
+            if (ov) v = `<span style="color:var(--accent);font-weight:600;">${ov.newVal}</span> <span style="font-size:9px;color:var(--muted);text-decoration:line-through;">${v}</span>`;
+            h += `<td>${v}</td>`;
+        }
+        h += '</tr>';
+    }
+    if (!page.length) h = '<tr><td colspan="'+(columns.length+1)+'" style="text-align:center;padding:40px;">无数据</td></tr>';
+    tbody.innerHTML = h;
+
+    const pc = document.getElementById('pagination');
+    if (pages <= 1) { pc.innerHTML = `<span style="font-size:11px;color:var(--muted);">共 ${total} 行</span>`; return; }
+    let ph = `<button onclick="goPage(1)" ${currentPage===1?'disabled':''}><<</button>`;
+    ph += `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}><</button>`;
+    for (let p = Math.max(1, currentPage-3); p <= Math.min(pages, currentPage+3); p++)
+        ph += `<button onclick="goPage(${p})" class="${p===currentPage?'active':''}">${p}</button>`;
+    ph += `<button onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>></button>`;
+    ph += `<button onclick="goPage(${pages})" ${currentPage===pages?'disabled':''}>>></button>`;
+    ph += `<span style="font-size:11px;color:var(--muted);margin-left:8px;">${total} 行 / ${pages} 页</span>`;
+    pc.innerHTML = ph;
+}
+
+function goPage(p) {
+    const pages = Math.ceil(getSortedData().length / PAGE_SIZE);
+    currentPage = Math.max(1, Math.min(p, pages));
+    renderTable(); document.getElementById('table-scroll').scrollTop = 0;
+}
+
+// ── Export ────────────────────────────────────────────────
+function exportData(fmt) {
+    const sorted = getSortedData();
+    if (!sorted.length) return;
+    if (fmt === 'csv') { download('sorted_data.csv', '﻿'+Papa.unparse(sorted), 'text/csv;charset=utf-8'); }
+    else {
+        if (typeof XLSX === 'undefined') { alert('Excel 导出需要联网加载组件。请使用 CSV 导出。'); return; }
+        const ws = XLSX.utils.json_to_sheet(sorted); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Sorted'); XLSX.writeFile(wb, 'sorted_data.xlsx');
+    }
+}
+function download(fn, content, mime) { const b = new Blob([content], {type: mime}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click(); }
+
+// ── Config ────────────────────────────────────────────────
+function saveConfig() { download('sort_config.json', JSON.stringify({columns, idCol, sortLevels, exceptions}, null, 2), 'application/json'); }
+function loadConfig() {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+    inp.onchange = function() {
+        const f = this.files[0]; if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try { const cfg = JSON.parse(e.target.result); if (cfg.sortLevels) sortLevels = cfg.sortLevels; if (cfg.exceptions) exceptions = cfg.exceptions; if (cfg.idCol && columns.includes(cfg.idCol)) { idCol = cfg.idCol; document.getElementById('ex-id-col').value = idCol; } renderAll(); } catch(err) { alert('方案文件格式错误'); }
+        }; reader.readAsText(f);
+    }; inp.click();
+}
+function resetAll() {
+    sortLevels = [{col: columns[0], dir: 'asc', enabled: true, mode: detectType(columns[0])==='text'?'group':'sort', type: detectType(columns[0]), groups: []}];
+    exceptions = {top:[], bottom:[], overrides:[]}; idCol = columns[0];
+    document.getElementById('ex-id-col').value = idCol; currentPage = 1; renderAll();
+}
+
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === 'ArrowRight') goPage(currentPage + 1);
+    if (e.key === 'ArrowLeft') goPage(currentPage - 1);
+});
+document.getElementById('ov-dialog').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
+
+function loadFromOMS() {
+    var uz = document.getElementById('upload-zone');
+    uz.innerHTML = '<h2>⏳ 正在从 OMS 加载最新 850 PO 数据...</h2><p>请稍候...</p>';
+    fetch('/api/sort-data').then(function(r) { return r.json(); }).then(function(d) {
+        if (d.records && d.records.length) {
+            initData(d.records, 'OMS 850 PO (' + d.total + '条)');
+            // Default sort chain: CTO P1 (group) → OrderType (group) → MSBD (sort) → Ship Mode (group)
+            sortLevels = [
+                {col: (columns.indexOf('CTO_P1')>=0?'CTO_P1':columns[0]), dir:'asc', enabled:true, mode:'group', type:'text', groups:['Y','']},
+                {col: (columns.indexOf('SUB_TYPE')>=0?'SUB_TYPE':columns[0]), dir:'asc', enabled:true, mode:'group', type:'text', groups:[]},
+                {col: (columns.indexOf('MSBD')>=0?'MSBD':columns[0]), dir:'asc', enabled:true, mode:'sort', type:'date', groups:[]},
+                {col: (columns.indexOf('SHIP_MODE')>=0?'SHIP_MODE':columns[0]), dir:'asc', enabled:true, mode:'group', type:'text', groups:[]}
+            ];
+            // Populate filter values dynamically from data
+            window.__FILTER_VALUES__ = {};
+            var filterFields = ['REGION','SUB_TYPE','PRIORITY','ACK_STATUS','IS_HOLD','SHIP_MODE','STATUS','SCAC','CTO_P1'];
+            filterFields.forEach(function(f) {
+                if (columns.indexOf(f) >= 0) {
+                    var vals = new Set();
+                    rawData.forEach(function(r) { var v = (r[f]||'').toString().trim(); if (v) vals.add(v); });
+                    window.__FILTER_VALUES__[f] = Array.from(vals).sort();
+                }
+            });
+            renderAll();
+        } else {
+            uz.innerHTML = '<h2>❌ 无数据</h2><p>' + (d.error || '请先在首页刷新 OMS 数据') + '</p><p><a href="/">← 返回首页刷新数据</a></p>';
+        }
+    }).catch(function(e) {
+        uz.innerHTML = '<h2>❌ 加载失败</h2><p style="color:var(--danger);">错误: ' + e.message + '</p>' +
+            '<p>可能原因：① 服务器未启动 → 双击启动.bat ② 未刷新OMS数据 → <a href="/">回首页刷新</a> ③ 浏览器缓存 → <b>Ctrl+Shift+R</b> 强制刷新</p>';
+    });
+}
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

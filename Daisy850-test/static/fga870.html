@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>870 FGA 优先级分配</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--accent:#2563eb;--danger:#dc2626;--success:#16a34a;--r:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);padding:20px;}
+a.back{font-size:12px;color:var(--muted);text-decoration:none;}
+h1{font-size:22px;margin:6px 0 2px;}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.steps{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;background:#fafbfc;}
+.dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1;flex:none;}
+.dot.green{background:var(--success);}.dot.red{background:var(--danger);}
+.btn{padding:8px 16px;border:1px solid var(--border);border-radius:var(--r);background:var(--card);color:var(--text);font-size:13px;cursor:pointer;}
+.btn:hover{background:#f8fafc;}
+.btn-a{background:var(--accent);color:#fff;border-color:var(--accent);}.btn-a:hover{background:#1d4ed8;}
+.btn-s{background:var(--success);color:#fff;border-color:var(--success);}.btn-s:hover{background:#15803d;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.filelabel{position:relative;overflow:hidden;display:inline-block;}
+.filelabel input[type=file]{position:absolute;left:0;top:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;min-width:100px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.kpi .n{font-size:20px;font-weight:700;}.kpi .l{font-size:11px;color:var(--muted);margin-top:2px;}
+.legend{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.legend span{display:inline-block;padding:2px 8px;border-radius:4px;margin-right:6px;}
+.tablewrap{overflow:auto;max-height:72vh;border-radius:var(--r);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:12.5px;}
+th{position:sticky;top:0;background:#2f3b57;color:#fff;padding:7px 6px;text-align:right;white-space:nowrap;font-weight:500;z-index:1;}
+th:nth-child(-n+6){text-align:left;}
+td{padding:6px;border-bottom:1px solid #eef0f3;text-align:right;white-space:nowrap;}
+td.po,td.rmk,td.ipn,td.mcid{text-align:left;font-family:Consolas,monospace;}
+td.ipn{color:#33415c;font-weight:600;}td.mcid{color:#1257a6;font-weight:600;}
+tr.st1{background:#f6f8fb;}
+.rk{text-align:center;font-weight:700;color:#1f6feb;}.q{font-weight:700;}
+.good{background:#e6f7ec;color:#137a3f;font-weight:600;}
+.sn{background:#e7f0fb;color:#1257a6;}.ack{background:#fff6e0;color:#946200;}
+.a11{background:#fde7e7;color:#b42222;font-weight:600;text-align:left;font-family:Consolas,monospace;}
+.a05{background:#fdeede;color:#b5651d;font-weight:600;}.a32{background:#ececec;color:#555;}
+.z{color:#c9ccd1;}.rmk{color:#444;font-size:11.5px;}.ok{color:#137a3f;}.err{color:#b42222;font-weight:700;}
+.alert{background:#fff3cd;color:#8a5a00;text-align:left;font-weight:600;}
+.msg{font-size:12px;margin-left:8px;}
+</style>
+</head>
+<body>
+<a class="back" href="/">← 返回工具箱</a>
+<h1>🧮 870 FGA 优先级分配</h1>
+<p class="subtitle">同 IPN+MCID 组内按 MSBD 分配 ｜ 好产出上浮 · 缺料按材料集中下沉最低PO · A05质量hold落最低有产出PO</p>
+
+<div class="panel">
+  <div class="steps">
+    <div class="step"><span class="dot" id="dot-850"></span><span id="txt-850">① 850 数据(OMS)</span></div>
+    <label class="btn filelabel">② 上传 T_HOLD_PO.csv<input type="file" accept=".csv" onchange="uploadFile(this,'hold')"></label>
+    <div class="step"><span class="dot" id="dot-hold"></span><span id="txt-hold">未上传</span></div>
+    <label class="btn filelabel">③ 上传 T_STATUS_PO.csv<input type="file" accept=".csv" onchange="uploadFile(this,'status')"></label>
+    <div class="step"><span class="dot" id="dot-status"></span><span id="txt-status">未上传</span></div>
+    <button class="btn btn-a" id="btn-run" onclick="runAlloc()" disabled>▶ 运行分配</button>
+    <button class="btn" id="btn-export" onclick="exportCSV()" disabled>⬇ 导出CSV</button>
+    <span class="msg" id="msg"></span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:10px;">
+    850 订单数据从 OMS 拉取（若显示未就绪，请到<a href="/">首页</a>点「刷新 OMS 数据」）。Hold/Status 两张表用上传方式。
+  </div>
+</div>
+
+<div id="result" style="display:none;">
+  <div class="kpis" id="kpis"></div>
+  <div class="legend">
+    <span class="good">好产出 SS/BS/SCH</span><span class="sn">已出 SN</span>
+    <span class="ack">未启动 ACK</span><span class="a11">缺料 A11</span>
+    <span class="a05">质量hold A05</span><span class="a32">整单锁 A32</span>
+    <span class="alert">⚠ 异常</span>
+  </div>
+  <div class="tablewrap">
+    <table><thead><tr>
+      <th>优先级</th><th>PO</th><th>行</th><th>料号IPN</th><th>MCID</th><th>MSBD</th><th>QTY</th>
+      <th>ACK</th><th>SCH</th><th>BS</th><th>SS</th><th>ASN</th><th>SN</th>
+      <th>缺料A11</th><th>A05</th><th>A32</th><th>REMARK</th><th>平衡</th><th>Alert</th>
+    </tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+</div>
+
+<script>
+var RECORDS = [];
+
+function msg(t, color){ var m=document.getElementById('msg'); m.textContent=t||''; m.style.color=color||'var(--muted)'; }
+
+async function checkStatus(){
+  try{
+    var d = await (await fetch('/api/fga-status')).json();
+    setDot('dot-850', d.has_850, 'txt-850', d.has_850 ? ('① 850就绪 · FGA '+d.fga_count+'条') : '① 850未就绪(去首页刷新OMS)');
+    setDot('dot-hold', d.has_hold, 'txt-hold', d.has_hold ? 'Hold已上传' : 'Hold未上传');
+    setDot('dot-status', d.has_status, 'txt-status', d.has_status ? 'Status已上传' : 'Status未上传');
+    document.getElementById('btn-run').disabled = !(d.has_850 && d.has_hold && d.has_status);
+  }catch(e){ msg('状态检查失败: '+e, 'var(--danger)'); }
+}
+function setDot(dotId, ok, txtId, txt){
+  document.getElementById(dotId).className = 'dot ' + (ok?'green':'red');
+  if(txtId) document.getElementById(txtId).textContent = txt;
+}
+
+function uploadFile(input, type){
+  var f = input.files[0]; if(!f) return;
+  msg('读取 '+f.name+' ...', 'var(--accent)');
+  var reader = new FileReader();
+  reader.onload = async function(){
+    try{
+      var d = await (await fetch('/api/fga-upload', {method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({type:type, content:reader.result})})).json();
+      if(d.ok){ msg('✅ '+(type==='hold'?'Hold':'Status')+' 上传成功 · '+d.rows+' 行', 'var(--success)'); checkStatus(); }
+      else { msg('❌ '+(d.error||'上传失败'), 'var(--danger)'); }
+    }catch(e){ msg('❌ 上传出错: '+e, 'var(--danger)'); }
+  };
+  reader.readAsText(f, 'utf-8');
+}
+
+async function runAlloc(){
+  var btn=document.getElementById('btn-run'); btn.disabled=true; btn.textContent='⏳ 分配中...';
+  msg('计算中...', 'var(--accent)');
+  try{
+    var d = await (await fetch('/api/fga-allocate')).json();
+    btn.disabled=false; btn.textContent='▶ 运行分配';
+    if(d.error){ msg('❌ '+d.error, 'var(--danger)'); return; }
+    RECORDS = d.records || [];
+    renderKPIs(d); renderTable(RECORDS);
+    document.getElementById('result').style.display='block';
+    document.getElementById('btn-export').disabled = RECORDS.length===0;
+    var skip = Object.entries(d.skipped||{}).map(function(kv){return kv[0]+':'+kv[1];}).join(' ');
+    msg('✅ 分配完成 · '+d.total+' PO · '+d.balanced+'/'+d.total+' 平衡 · 跳过['+skip+']', 'var(--success)');
+  }catch(e){ btn.disabled=false; btn.textContent='▶ 运行分配'; msg('❌ '+e, 'var(--danger)'); }
+}
+
+function renderKPIs(d){
+  var totG=0,totS=0,totA=0;
+  RECORDS.forEach(function(r){ totG+=r.ss+r.bs+r.sch; totS+=r.a11_qty; totA+=r.a05; });
+  var k=[
+    ['纳入 PO', d.total, ''],
+    ['分组', d.groups, ''],
+    ['可再分配组', d.multi_groups, ''],
+    ['平衡通过', d.balanced+'/'+d.total, d.balanced===d.total?'var(--success)':'var(--danger)'],
+    ['好产出', totG, 'var(--success)'],
+    ['缺料A11', totS, 'var(--danger)'],
+    ['质量hold', totA, '#b5651d'],
+    ['⚠ 异常', (d.alerts||[]).length, (d.alerts||[]).length?'var(--danger)':'#999'],
+  ];
+  document.getElementById('kpis').innerHTML = k.map(function(x){
+    return '<div class="kpi"><div class="n"'+(x[2]?' style="color:'+x[2]+'"':'')+'>'+x[1]+'</div><div class="l">'+x[0]+'</div></div>';
+  }).join('');
+}
+
+function cell(v, cls){ return v ? '<td class="'+cls+'">'+v+'</td>' : '<td class="z">'+v+'</td>'; }
+
+function renderTable(recs){
+  var sorted = recs.slice().sort(function(a,b){
+    if(a.ipn!==b.ipn) return a.ipn<b.ipn?-1:1;
+    if(a.mcid!==b.mcid) return a.mcid<b.mcid?-1:1;
+    return (a.rank||99)-(b.rank||99);
+  });
+  var prev=null, stripe=0, rows=[];
+  sorted.forEach(function(r){
+    var gk=r.ipn+'|'+r.mcid; if(gk!==prev){stripe^=1;prev=gk;}
+    var bal = r.balanced ? '<span class="ok">✓</span>' : '<span class="err">✗</span>';
+    var rk = r.rank ? r.rank : '🔒A32';
+    rows.push('<tr class="'+(stripe?'st1':'st0')+'">'
+      +'<td class="rk">'+rk+'</td><td class="po">'+r.po+'</td><td>'+r.po_line+'</td>'
+      +'<td class="ipn">'+r.ipn+'</td><td class="mcid">'+r.mcid+'</td>'
+      +'<td>'+(r.msbd||'').substring(0,10)+'</td><td class="q">'+r.po_qty+'</td>'
+      +cell(r.ack,'ack')+cell(r.sch,'good')+cell(r.bs,'good')+cell(r.ss,'good')
+      +cell(r.asn,'')+cell(r.sn,'sn')+cell(r.a11,'a11')+cell(r.a05,'a05')+cell(r.a32,'a32')
+      +'<td class="rmk">'+r.remark+'</td><td>'+bal+'</td>'
+      +(r.alert?'<td class="alert">⚠ '+r.alert+'</td>':'<td class="z"></td>')
+      +'</tr>');
+  });
+  document.getElementById('tbody').innerHTML = rows.join('');
+}
+
+function exportCSV(){
+  var cols=['PO','PO_LINE','IPN','MCID','MSBD','PRIORITY','PO_QTY','ACK','SCH','BS','SS','ASN','SN','A11','A05','A32','BALANCED','ALERT','REMARK'];
+  var lines=[cols.join(',')];
+  RECORDS.forEach(function(r){
+    var row=[r.po,r.po_line,r.ipn,r.mcid,(r.msbd||'').substring(0,10),r.rank,r.po_qty,r.ack,r.sch,r.bs,r.ss,r.asn,r.sn,
+      '"'+(r.a11||'')+'"',r.a05,r.a32,(r.balanced?'OK':'ERR'),'"'+(r.alert||'')+'"','"'+r.remark+'"'];
+    lines.push(row.join(','));
+  });
+  var blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='fga870_allocation.csv'; a.click();
+}
+
+checkStatus();
+</script>
+</body>
+</html>

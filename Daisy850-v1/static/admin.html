@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>账号管理 · 850 Toolbox</title>
+<style>
+:root { --bg: #0f172a; --card: #1e293b; --b2: #334155; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+h2 { font-size: 16px; margin-bottom: 4px; }
+.sub { font-size: 10px; color: var(--muted); margin-bottom: 16px; }
+.card { background: var(--card); border: 1px solid var(--b2); border-radius: 10px; padding: 16px; margin-bottom: 10px; }
+.fg { margin-bottom: 12px; }
+.fg label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.fg input { padding: 8px 10px; font-size: 13px; background: var(--bg); color: var(--text); border: 1px solid var(--b2); border-radius: 4px; width: 100%; max-width: 200px; }
+.btn { padding: 6px 16px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-a { background: var(--accent); color: #fff; }
+.btn-b { background: var(--green); color: #fff; }
+.btn-c { background: var(--red); color: #fff; }
+.btn-d { background: var(--b2); color: var(--amber); }
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+th { text-align: left; padding: 8px 6px; background: rgba(59,130,246,.08); color: var(--accent); font-size: 10px; }
+td { padding: 8px 6px; border-bottom: 1px solid var(--b2); }
+.msg { font-size: 11px; padding: 6px 10px; border-radius: 4px; margin-bottom: 10px; display: none; }
+.msg.show { display: block; }
+.msg.ok { background: rgba(34,197,94,.15); color: var(--green); }
+.msg.err { background: rgba(239,68,68,.15); color: var(--red); }
+.tag { font-size: 9px; padding: 2px 6px; border-radius: 8px; }
+.tag.active { background: rgba(34,197,94,.2); color: var(--green); }
+.tag.pending { background: rgba(245,158,11,.2); color: var(--amber); }
+.tag.disabled { background: rgba(239,68,68,.2); color: var(--red); }
+</style>
+</head>
+<body>
+<h2>账号管理</h2>
+<div class="sub">审批注册申请 / 管理账号</div>
+<div id="msg" class="msg"></div>
+<div class="card" id="auth-card">
+  <div class="fg"><label>管理员密码</label><input type="password" id="admin-pw" placeholder="输入管理密码"></div>
+  <button class="btn btn-a" onclick="loadUsers()">验证并进入</button>
+</div>
+<div class="card" id="user-list" style="display:none;">
+  <h3 style="font-size:13px;margin-bottom:10px;">用户列表</h3>
+  <table><thead><tr><th>账号</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="user-tbody"></tbody></table>
+</div>
+<script>
+var adminPw='';
+function msg(t,ok){var m=document.getElementById('msg');m.textContent=t;m.className='msg show '+(ok?'ok':'err');}
+async function loadUsers(){
+  adminPw=document.getElementById('admin-pw').value.trim();
+  if(!adminPw){msg('请输入管理员密码');return;}
+  try{
+    var r=await fetch('/api/admin-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin_pw:adminPw,action:'list'})});
+    var d=await r.json();
+    if(d.error){msg(d.error);return;}
+    document.getElementById('auth-card').style.display='none';
+    var list=document.getElementById('user-list');list.style.display='block';
+    renderUsers(d.users);
+  }catch(e){msg('网络错误')}
+}
+function renderUsers(users){
+  var h='';
+  users.forEach(function(u){
+    h+='<tr><td>'+u.username+'</td><td><span class="tag '+u.status+'">'+u.status+'</span></td><td>'+u.created+'</td><td>';
+    if(u.status==='pending'){
+      h+='<button class="btn btn-b" onclick="action(\'approve\',\''+u.username+'\')">通过</button> ';
+      h+='<button class="btn btn-c" onclick="action(\'reject\',\''+u.username+'\')">拒绝</button>';
+    }else if(u.status==='active'){
+      h+='<button class="btn btn-d" onclick="action(\'disable\',\''+u.username+'\')">禁用</button>';
+    }else if(u.status==='disabled'){
+      h+='<button class="btn btn-b" onclick="action(\'enable\',\''+u.username+'\')">启用</button>';
+    }
+    h+='</td></tr>';
+  });
+  document.getElementById('user-tbody').innerHTML=h||'<tr><td colspan="4" style="color:var(--muted);">暂无用户</td></tr>';
+}
+async function action(act,username){
+  if(!confirm('确认 '+act+' '+username+' ?'))return;
+  try{
+    var r=await fetch('/api/admin-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin_pw:adminPw,action:act,username:username})});
+    var d=await r.json();
+    if(d.ok){msg(act+' 成功',true);loadUsers();}else{msg(d.error)}
+  }catch(e){msg('网络错误')}
+}
+document.getElementById('admin-pw').addEventListener('keydown',function(e){if(e.key==='Enter')loadUsers();});
+</script>
+</body>
+</html>
