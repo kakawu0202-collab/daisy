@@ -198,7 +198,7 @@ async function checkCache() {
     var status = document.getElementById('data-status');
     if (d.cached) {
       dot.className = 'dot green';
-      status.textContent = '数据就绪';
+      status.textContent = '数据就绪' + (d.auto_pull ? ' · ⏰自动刷新' : '');
       document.getElementById('data-count').textContent = (d.po_count||0).toLocaleString();
       document.getElementById('data-time').textContent = (d.time||'').substring(0,19);
     } else {
@@ -239,7 +239,7 @@ async function pullOMS() {
         (d.po_count||0).toLocaleString() + ' 条 PO · ' +
         (d.e2e_count||0).toLocaleString() + ' E2E · ' +
         (d.gpp_count||0) + ' GPP · ' + ts + '</span>';
-      document.getElementById('data-status').textContent = '数据就绪 (' + ts + ')';
+      document.getElementById('data-status').textContent = '数据就绪 (' + ts + ') · ⏰自动刷新';
       document.getElementById('data-dot').className = 'dot green';
       checkCache();
     } else {

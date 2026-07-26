@@ -533,6 +533,7 @@ class ToolboxHandler(SimpleHTTPRequestHandler):
                 'po_count': oms.cached_data.get('po_count',0) if oms.cached_data else 0,
                 'e2e_count': oms.cached_data.get('e2e_count',0) if oms.cached_data else 0,
                 'gpp_count': oms.cached_data.get('gpp_count',0) if oms.cached_data else 0,
+                'auto_pull': os.path.exists(_creds_path()),
             })
 
         elif path == '/api/sort-data':
