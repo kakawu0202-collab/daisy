@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EOQ 出货模式切换 · 850 Toolbox</title>
+<title>EOQ · Daisy 850</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root { --bg: #0f172a; --card: #1e293b; --b2: #334155; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --r: 10px; }
@@ -15,8 +15,7 @@ h2 { font-size: 18px; margin-bottom: 16px; }
 .btn-a { background: var(--accent); color: #fff; border-color: var(--accent); }
 .summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; }
 .summary .s { background: var(--card); border: 1px solid var(--b2); border-radius: var(--r); padding: 10px 16px; }
-.summary .s .v { font-size: 20px; font-weight: 800; }
-.summary .s .l { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+.summary .s .v { font-size: 20px; font-weight: 800; } .summary .s .l { font-size: 9px; color: var(--muted); text-transform: uppercase; }
 .table-wrap { overflow-x: auto; max-height: 50vh; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 10px; }
 th { text-align: left; padding: 6px 8px; background: rgba(59,130,246,.08); color: var(--accent); font-size: 9px; position: sticky; top: 0; }
@@ -25,151 +24,76 @@ tr.air { background: rgba(245,158,11,.08); border-left: 3px solid var(--amber); 
 .upload-zone { border: 2px dashed var(--b2); border-radius: var(--r); padding: 24px; text-align: center; cursor: pointer; margin-bottom: 12px; transition: border-color .2s; }
 .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); }
 .upload-zone.loaded { border-style: solid; border-color: var(--green); }
-
 </style>
 </head>
 <body>
 <a href="/">← 返回工具箱</a>
 <h2>✈️→📦 EOQ 出货模式切换</h2>
-
 <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-    <h3 style="margin-bottom:4px;">📁 上传客人 Excel 文件</h3>
-    <p style="font-size:10px;color:var(--muted);">表头需含 MCID / Country / Start Date / End Date，Excel 直接拖入</p>
+    <h3>📁 上传客人 Excel 条件表</h3><p style="font-size:10px;color:var(--muted);">MCID / Start Date / End Date / Type 等列</p>
     <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(this.files[0])">
 </div>
-
-<div id="parsed-info" style="font-size:10px;color:var(--muted);margin-bottom:8px;"></div>
+<div id="conds-section"></div>
 <div id="summary"></div>
-<div id="result"><div style="text-align:center;padding:40px;color:var(--muted);">上传客人 Excel 文件开始</div></div>
-
-<div style="display:flex;gap:8px;"><button class="btn" onclick="exportCSV()" id="btn-csv" style="display:none;">📥 CSV</button></div>
-
+<div id="result"><div style="text-align:center;padding:40px;color:var(--muted);">上传 Excel 开始</div></div>
+<div style="margin-top:8px;"><button class="btn" onclick="exportCSV()" id="btn-csv" style="display:none;">📥 CSV</button></div>
 <script>
-var allResults = [];
+var allResults=[], allConds=[];
+var zone=document.getElementById('drop-zone');
+zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('dragover');});
+zone.addEventListener('dragleave',function(){zone.classList.remove('dragover');});
+zone.addEventListener('drop',function(e){e.preventDefault();zone.classList.remove('dragover');var f=e.dataTransfer.files[0];if(f)handleFile(f);});
 
-var zone = document.getElementById('drop-zone');
-zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('dragover'); });
-zone.addEventListener('dragleave', function(){ zone.classList.remove('dragover'); });
-zone.addEventListener('drop', function(e){ e.preventDefault(); zone.classList.remove('dragover'); var f=e.dataTransfer.files[0]; if(f) handleFile(f); });
-
-function parseDate(v){
-    if (!v) return '';
-    var s = String(v).trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { var p=s.split('/'); return p[2]+'-'+p[0]+'-'+p[1]; }
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) { var p=s.split('/'); return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0'); }
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g,'-');
-    var jsDate = new Date(s);
-    if (!isNaN(jsDate.getTime())) return jsDate.toISOString().substring(0,10);
-    return '';
-}
+function parseDate(v){if(!v)return'';if(v instanceof Date)return v.toISOString().substring(0,10);if(typeof v==='number'&&v>30000&&v<100000){var d=new Date((v-25569)*86400*1000);return d.toISOString().substring(0,10);}var s=String(v).trim();if(/^\+?\d{5,6}-\d{1,2}$/.test(s)){var n=parseFloat(s);if(n>30000&&n<100000){var d=new Date((n-25569)*86400*1000);return d.toISOString().substring(0,10);}}if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){var p=s.split('/');return p[2]+'-'+p[0]+'-'+p[1];}if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){var p=s.split('/');return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0');}if(/^\d{4}\/\d{2}\/\d{2}$/.test(s))return s.replace(/\//g,'-');var d=new Date(s);if(!isNaN(d.getTime()))return d.toISOString().substring(0,10);return'';}
 
 function handleFile(file){
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e){
-        var wb = XLSX.read(e.target.result, {type:'array'});
-        var sheet = wb.Sheets[wb.SheetNames[0]];
-        var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
-        if (!rows.length) return alert('Excel 无数据');
-
-        // Detect columns: MCID, Country/Country Code, Start Date, End Date/Type
-        var keys = Object.keys(rows[0]);
-        var mcidKey = keys.find(function(k){ return /mcid/i.test(k); }) || keys[0];
-        var countryKey = keys.find(function(k){ return /country/i.test(k); });
-        var fromKey = keys.find(function(k){ return /start|from|begin/i.test(k) && /date/i.test(k); }) || keys.find(function(k){ return /start/i.test(k); });
-        var toKey = keys.find(function(k){ return /end|to/i.test(k) && /date/i.test(k); }) || keys.find(function(k){ return /end/i.test(k); });
-        var typeKey = keys.find(function(k){ return /type|order/i.test(k); });
-
-        var conditions = [];
-        rows.forEach(function(r){
-            var mcid = String(r[mcidKey]||'').trim();
-            var from = parseDate(r[fromKey||'']||'');
-            var to = parseDate(r[toKey||'']||''); if (to && !from) { from = to; to = ''; }
-            var type = typeKey ? String(r[typeKey]||'').trim().toUpperCase() : '';
-            if (!['CTO','FGA','RTL'].includes(type)) type = '';
-            if (mcid || from || to || type) conditions.push({mcid:mcid, from:from, to:to, type:type});
-        });
-
-        if (!conditions.length) return alert('未识别到条件数据');
-        document.getElementById('parsed-info').innerHTML = '识别到 '+conditions.length+' 行条件 · 列: MCID='+mcidKey+(countryKey?' Country='+countryKey:'')+' Date='+(fromKey||'?')+'~'+(toKey||'?')+(typeKey?' Type='+typeKey:'');
+    if(!file)return;var reader=new FileReader();
+    reader.onload=function(e){
+        var wb=XLSX.read(e.target.result,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+        if(!rows.length)return alert('无数据');
+        var keys=Object.keys(rows[0]);
+        var mk=keys.find(function(k){return/mcid/i.test(k);})||keys[0];
+        var fk=keys.find(function(k){return/start|from|begin/i.test(k)&&/date/i.test(k);})||keys.find(function(k){return/start/i.test(k);});
+        var tk=keys.find(function(k){return/end|to/i.test(k)&&/date/i.test(k);})||keys.find(function(k){return/end/i.test(k);});
+        var yk=keys.find(function(k){return/type|order/i.test(k);});
+        var ck=keys.find(function(k){return/country/i.test(k);});
+        var conds=[];rows.forEach(function(r){var m=String(r[mk]||'').trim(),f=parseDate(r[fk||'']||''),t=parseDate(r[tk||'']||''),y=yk?String(r[yk]||'').trim().toUpperCase():'',c=ck?String(r[ck]||'').trim():'';if(!['CTO','FGA','RTL'].includes(y))y='';if(m||f||t||y)conds.push({mcid:m,from:f,to:t,type:y,country:c});});
+        if(!conds.length)return alert('未识别');
+        var ch='<div class="card"><h3>📋 解析条件 ('+conds.length+'行)</h3><table><tr><th>MCID</th><th>Country</th><th>Start</th><th>End</th><th>Type</th></tr>';
+        conds.forEach(function(c){ch+='<tr><td><b>'+c.mcid+'</b></td><td>'+c.country+'</td><td>'+c.from+'</td><td>'+c.to+'</td><td>'+c.type+'</td></tr>';});
+        ch+='</table></div>';document.getElementById('conds-section').innerHTML=ch;
         document.getElementById('drop-zone').classList.add('loaded');
-        document.getElementById('drop-zone').innerHTML = '<strong>✅ '+file.name+'</strong> · '+conditions.length+' 行条件 · <a href="#" onclick="location.reload()" style="color:var(--accent);">重新上传</a>';
-
-        queryAll(conditions);
-    };
-    reader.readAsArrayBuffer(file);
+        document.getElementById('drop-zone').innerHTML='<strong>✅ '+file.name+'</strong> · '+conds.length+' 行条件 · <a href="#" onclick="location.reload()" style="color:var(--accent);">重新上传</a>';
+        queryAll(conds);
+    };reader.readAsArrayBuffer(file);
 }
 
-function queryAll(conditions){
-    document.getElementById('result').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">⏳ 查询 '+conditions.length+' 组条件...</div>';
-    document.getElementById('summary').innerHTML = '';
-    allResults = [];
-    var seen = {};
-    var pending = conditions.length;
-
-    conditions.forEach(function(c){
-        var p = [];
-        if (c.mcid) p.push('mcid='+encodeURIComponent(c.mcid));
-        if (c.type) p.push('sub_type='+c.type);
-        if (c.from) p.push('po_from='+c.from);
-        if (c.to) p.push('po_to='+c.to);
-        p.push('limit=2000');
-
-        fetch('/api/sort-data?'+p.join('&')).then(function(r){ return r.json(); }).then(function(d){
-            (d.records||[]).forEach(function(r){
-                var key = r.PO + '_' + r.PO_LINE;
-                if (!seen[key]) { seen[key] = true; allResults.push(r); }
-            });
-            pending--;
-            if (pending === 0) renderResults();
-        }).catch(function(){ pending--; if (pending === 0) renderResults(); });
-    });
+function queryAll(conds){
+    document.getElementById('result').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">⏳ 查询中...</div>';
+    document.getElementById('summary').innerHTML='';allResults=[];allConds=conds;var seen={},pending=conds.length;
+    conds.forEach(function(c){var p=[];if(c.mcid)p.push('mcid='+encodeURIComponent(c.mcid));if(c.type)p.push('sub_type='+c.type);if(c.from)p.push('po_from='+c.from);if(c.to)p.push('po_to='+c.to);p.push('limit=2000');fetch('/api/sort-data?'+p.join('&')).then(function(r){return r.json()}).then(function(d){(d.records||[]).forEach(function(r){var key=r.PO+'_'+r.PO_LINE;if(!seen[key]){seen[key]=true;allResults.push(r);}});pending--;if(pending===0)render();}).catch(function(){pending--;if(pending===0)render();});});
 }
 
-function renderResults(){
-    document.getElementById('btn-csv').style.display = allResults.length?'inline-block':'none';
-    // Exclude NACK and ZC
-    allResults = allResults.filter(function(r){
-        var s = (r.STATUS_LABEL||'').toString();
-        return s.indexOf('NACK') < 0 && s.indexOf('ZC') < 0 && r.STATUS !== 'ZC' && r.ACK_STATUS !== 'REJECT';
-    });
-    var total = allResults.length;
-    var air = allResults.filter(function(r){ return r.SHIP_MODE === 'A'; });
-    document.getElementById('summary').innerHTML =
-        '<div class="summary">'+
-        '<div class="s"><div class="l">匹配订单</div><div class="v">'+total.toLocaleString()+'</div></div>'+
-        '<div class="s"><div class="l">✈️ Air→PA</div><div class="v" style="color:var(--amber);">'+air.length.toLocaleString()+'</div></div>'+
-        '<div class="s"><div class="l">📦 已是PA</div><div class="v" style="color:var(--muted);">'+(total-air.length).toLocaleString()+'</div></div>'+
-        '</div>';
-    if (!total) { document.getElementById('result').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">无匹配订单</div>'; return; }
-
-    var cols = ['PO','DELL_SO','PO_LINE','MCID','SCAC','SHIP_MODE','PO_RECEIVE_DATE','SHIP_TO_COUNTRY','STATUS_LABEL','SUB_TYPE','PO_QTY'];
-    var colLabels = ['PO','SO','PO Line','MCID','SCAC','Ship Mode','PO Received','Ship To','Status','Type','QTY'];
-    var h = '<div class="card"><div class="table-wrap"><table><tr>'+colLabels.map(function(c){ return'<th>'+c+'</th>'; }).join('')+'</tr>';
+function render(){
+    allResults=allResults.filter(function(r){var s=(r.STATUS_LABEL||'').toString();return s.indexOf('NACK')<0&&s.indexOf('ZC')<0&&r.STATUS!=='ZC'&&r.ACK_STATUS!=='REJECT';});
+    var total=allResults.length,air=allResults.filter(function(r){return r.SHIP_MODE==='A';});
+    document.getElementById('summary').innerHTML='<div class="summary"><div class="s"><div class="l">匹配订单</div><div class="v">'+total+'</div></div><div class="s"><div class="l">Air→PA</div><div class="v" style="color:var(--amber);">'+air.length+'</div></div><div class="s"><div class="l">PA已有</div><div class="v" style="color:var(--muted);">'+(total-air.length)+'</div></div></div>';
+    document.getElementById('btn-csv').style.display=total?'inline-block':'none';
+    if(!total){document.getElementById('result').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">无匹配订单</div>';return;}
+    var cols=['PO','DELL_SO','PO_LINE','MCID','SHIP_TO_COUNTRY','PO_RECEIVE_DATE','PRIORITY','SCAC','SHIP_MODE','SUB_TYPE','MASTER_TYPE','PO_QTY'];
+    var labs=['PO','SO','PO Line','MCID','Ship To','PO Received','Priority','Carrier','Ship Mode','Type','Master Type','QTY','Start','End'];
+    var h='<div class="card"><div class="table-wrap"><table><tr>'+labs.map(function(c){return'<th>'+c+'</th>';}).join('')+'</tr>';
     allResults.forEach(function(r){
-        var isAir = r.SHIP_MODE === 'A';
-        h += '<tr class="'+(isAir?'air':'')+'">';
-        cols.forEach(function(c){
-            var v = r[c]||'';
-            if (c==='SHIP_MODE') v = isAir ? '<span style="color:var(--amber);font-weight:700;">✈️ Air</span>' : '📦 '+(v||'PA');
-            h += '<td>'+v+'</td>';
-        });
-        h += '</tr>';
+        // Match condition by MCID + country
+        var cond=allConds.find(function(c){return c.mcid===r.MCID&&(!c.country||c.country===r.SHIP_TO_COUNTRY);})||{};
+        var isAir=r.SHIP_MODE==='A';h+='<tr class="'+(isAir?'air':'')+'">';
+        cols.forEach(function(c){var v=r[c]||'';if(c==='SHIP_MODE')v=isAir?'<span style="color:var(--amber);font-weight:700;">✈️ Air</span>':'📦 '+(v||'PA');h+='<td>'+v+'</td>';});
+        h+='<td>'+cond.from+'</td><td>'+cond.to+'</td></tr>';
     });
-    h += '</table></div></div>';
-    document.getElementById('result').innerHTML = h;
+    h+='</table></div></div>';document.getElementById('result').innerHTML=h;
 }
 
-function exportCSV(){
-    if (!allResults.length) return;
-    var cols = ['PO','DELL_SO','PO_LINE','MCID','SCAC','SHIP_MODE','PO_RECEIVE_DATE','SHIP_TO_COUNTRY','STATUS_LABEL','SUB_TYPE','PO_QTY'];
-    var csv = '﻿'+'PO,SO,PO Line,MCID,SCAC,Ship Mode,PO Received,Ship To,Status,Type,QTY'+'\n';
-    allResults.forEach(function(r){ csv += cols.map(function(c){ var v=(r[c]||'').toString(); return v.indexOf(',')>=0?'"'+v+'"':v; }).join(',')+'\n'; });
-    var b = new Blob([csv],{type:'text/csv;charset=utf-8'}); var a = document.createElement('a');
-    a.href = URL.createObjectURL(b); a.download = 'eoq_air_to_pa.csv'; a.click();
-}
+function exportCSV(){if(!allResults.length)return;var cols=['PO','DELL_SO','PO_LINE','MCID','SHIP_TO_COUNTRY','PO_RECEIVE_DATE','PRIORITY','SCAC','SHIP_MODE','SUB_TYPE','MASTER_TYPE','PO_QTY'];var csv='﻿PO,SO,PO Line,MCID,Ship To,PO Received,Priority,Carrier,Ship Mode,Type,Master Type,QTY,Start,End\n';allResults.forEach(function(r){var cond=allConds.find(function(c){return c.mcid===r.MCID&&(!c.country||c.country===r.SHIP_TO_COUNTRY);})||{};csv+=cols.map(function(c){var v=(r[c]||'').toString();return v.indexOf(',')>=0?'"'+v+'"':v;}).join(',')+','+cond.from+','+cond.to+'\n';});var b=new Blob([csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='eoq_result.csv';a.click();}
 </script>
-<script src="/nav.js"></script>
 </body>
 </html>

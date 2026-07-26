@@ -200,19 +200,21 @@ oms = OMSClient()
 
 # ── Auto-pull scheduler ────────────────────────────────────
 AUTO_PULL_INTERVAL = 600  # 10 minutes
-CREDS_FILE = os.path.join(DATA_DIR, 'oms_creds.json')
+def _creds_path():
+    return os.path.join(DATA_DIR, 'oms_creds.json')
 
 def load_creds():
-    if os.path.exists(CREDS_FILE):
+    path = _creds_path()
+    if os.path.exists(path):
         try:
-            with open(CREDS_FILE, 'r', encoding='utf-8') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except: pass
     return {}
 
 def save_creds(account, password):
     try:
-        with open(CREDS_FILE, 'w', encoding='utf-8') as f:
+        with open(_creds_path(), 'w', encoding='utf-8') as f:
             json.dump({'account': account, 'password': password}, f)
     except: pass
 
@@ -562,6 +564,18 @@ class ToolboxHandler(SimpleHTTPRequestHandler):
             po_list = params.get('po', [])
             if po_list:
                 records = [r for r in records if str(r.get('PO','')).strip() in po_list]
+            po_f = (params.get('po_from',[''])[0]).strip()
+            po_t = (params.get('po_to',[''])[0]).strip()
+            if po_f or po_t:
+                def in_range(r):
+                    prd = r.get('PO_RECEIVE_DATE','')
+                    if not prd: return False
+                    try: d = datetime.strptime(str(prd)[:10], '%Y-%m-%d').date()
+                    except: return False
+                    if po_f and d < datetime.strptime(po_f, '%Y-%m-%d').date(): return False
+                    if po_t and d > datetime.strptime(po_t, '%Y-%m-%d').date(): return False
+                    return True
+                records = [r for r in records if in_range(r)]
             limit = int((params.get('limit',['500'])[0]) or '500')
             records = records[:limit]
             self._json_response({'records': records, 'total': len(records)})
@@ -1323,6 +1337,8 @@ class ToolboxHandler(SimpleHTTPRequestHandler):
             'type_cnt': {t: sum(xreg.get(t,{}).values()) for t in ['CTO_P1','FGA','RTL','CTO'] if t in xreg},
             'cross_region': xreg,
             'backlog_xreg': backlog_xreg,
+            'asn_no_sn': sum(1 for r in backlog_records if r.get('ASN') and not r.get('SN')),
+            'asn_pending_qty': sum(r.get('PO_QTY',0) for r in backlog_records if r.get('ASN') and not r.get('SN')),
             'shipped_xreg': shipped_xreg,
             'cto_p1_gpp': cto_p1_gpp,
             'others_gpp': others_gpp,

@@ -47,6 +47,9 @@ td { padding: 5px 6px; border-bottom: 1px solid var(--b2); } tr:hover td { backg
 .chart-wrap { position: relative; height: 200px; }
 .clickable { cursor: pointer; transition: opacity .15s; touch-action: manipulation; }
 .clickable:active { opacity: .6; }
+.sort-ghost { opacity: 0.3; background: var(--accent) !important; }
+.sort-drag { opacity: 0.8; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.drg-handle { user-select: none; }
 .footer { text-align: center; font-size: 9px; color: var(--muted); margin-top: 12px; }
 /* Buttons - touch friendly */
 .btn-ap { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600; min-width: 48px; min-height: 36px; text-align: center; touch-action: manipulation; }
@@ -167,8 +170,21 @@ function clearPo(){document.getElementById('f-po-from').value='';document.getEle
 function clearMsbd(){document.getElementById('f-from').value='';document.getElementById('f-to').value='';load([]);}
 function load(p){var url='/api/k1-summary'+(p&&p.length?'?'+p.join('&'):'');document.getElementById('main').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">⏳ 计算中...</div>';fetch(url).then(function(r){return r.json()}).then(function(d){renderK1(d);window._pwaMarkRefresh&&window._pwaMarkRefresh();}).catch(function(e){document.getElementById('main').innerHTML='<div class="err">'+e.message+'</div>';});}
 function closeDrill(){document.getElementById('drill-modal').classList.remove('show');}
-function drillDown(params,title){var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k])}).join('&');document.getElementById('drill-title').textContent=title;document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--muted);">⏳</div>';document.getElementById('drill-modal').classList.add('show');fetch('/api/sort-data?'+q+'&limit=500').then(function(r){return r.json()}).then(function(d){drillData=d.records||[];if(!drillData.length){document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--muted);">无数据</div>';return;}var cols=['PO','PO_LINE','DELL_SO','DPN','IPN','PO_QTY','REMAIN_QTY','MSBD','PSD','SN_CDT','REGION','SUB_TYPE','PRIORITY','SHIP_MODE','SCAC','STATUS_LABEL','ASN','HAWB'];var h='<button class="btn-ap" onclick="downloadDrill()" style="margin-bottom:8px;">📥 CSV</button><table><tr>'+cols.map(function(c){return'<th>'+c+'</th>'}).join('')+'</tr>';drillData.forEach(function(r){h+='<tr>'+cols.map(function(c){return'<td>'+(r[c]||'')+'</td>'}).join('')+'</tr>';});h+='</table><div style="margin-top:8px;font-size:10px;color:var(--muted);">共 '+drillData.length+' 条</div>';document.getElementById('drill-body').innerHTML=h;}).catch(function(e){document.getElementById('drill-body').innerHTML='加载失败: '+e.message;});}
-function downloadDrill(){if(!drillData||!drillData.length)return;var cols=['PO','PO_LINE','DELL_SO','DPN','IPN','PO_QTY','REMAIN_QTY','MSBD','PSD','SN_CDT','REGION','SUB_TYPE','PRIORITY','SHIP_MODE','SCAC','STATUS_LABEL','ASN','HAWB'];var csv='﻿'+cols.join(',')+'\n';drillData.forEach(function(r){csv+=cols.map(function(c){var v=r[c]||'';return v.toString().indexOf(',')>=0?'"'+v+'"':v;}).join(',')+'\n';});var b=new Blob([csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='drilldown.csv';a.click();}
+function drillDown(params,title){var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k])}).join('&');document.getElementById('drill-title').textContent=title;document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--muted);">⏳</div>';document.getElementById('drill-modal').classList.add('show');window._drillUrl='/api/sort-data?'+q+'&limit=5000';fetch('/api/sort-data?'+q+'&limit=500').then(function(r){return r.json()}).then(function(d){drillData=d.records||[];if(!drillData.length){document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--muted);">无数据</div>';return;}var cols=['PO','PO_LINE','DELL_SO','DPN','IPN','PO_QTY','REMAIN_QTY','SHIP_QTY','MSBD','PSD','SN_CDT','PO_RECEIVE_DATE','REGION','SUB_TYPE','PRIORITY','SHIP_MODE','SCAC','MCID','SHIP_TO_COUNTRY','STATUS_LABEL','ASN','HAWB'];var h='<button class="btn-ap" onclick="downloadDrill()" style="margin-bottom:8px;">📥 CSV</button><table><tr>'+cols.map(function(c){return'<th>'+c+'</th>'}).join('')+'</tr>';drillData.forEach(function(r){h+='<tr>'+cols.map(function(c){return'<td>'+(r[c]||'')+'</td>'}).join('')+'</tr>';});h+='</table><div style="margin-top:8px;font-size:10px;color:var(--muted);">共 '+drillData.length+' 条</div>';document.getElementById('drill-body').innerHTML=h;}).catch(function(e){document.getElementById('drill-body').innerHTML='加载失败: '+e.message;});}
+function downloadDrill(){
+    var url = window._drillUrl || '/api/sort-data?limit=5000';
+    var cols=['PO','PO_LINE','DELL_SO','DPN','IPN','PO_QTY','REMAIN_QTY','SHIP_QTY','MSBD','PSD','SN_CDT','PO_RECEIVE_DATE','REGION','SUB_TYPE','PRIORITY','SHIP_MODE','SCAC','MCID','SHIP_TO_COUNTRY','STATUS_LABEL','ASN','HAWB'];
+    document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--muted);">⏳ 下载中...</div>';
+    fetch(url).then(function(r){return r.json()}).then(function(d){
+        var rows=d.records||[];
+        if(!rows.length){alert('无数据');return;}
+        var BOM='﻿';var csv=BOM+cols.join(',')+'\n';
+        rows.forEach(function(r){csv+=cols.map(function(c){var v=r[c]||'';return String(v).indexOf(',')>=0?'"'+v+'"':v;}).join(',')+'\n';});
+        var b=new Blob([csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');
+        a.href=URL.createObjectURL(b);a.download='drilldown_full.csv';a.click();
+        document.getElementById('drill-body').innerHTML='<div style="padding:20px;color:var(--green);">✅ 下载完成: '+rows.length+' 条</div>';
+    });
+}
 function buildRows(xr){var rows=[];['CTO_P1','FGA','RTL','CTO'].forEach(function(tp){var row=xr[tp]||{},sum=(row['DAO']||0)+(row['APJ']||0)+(row['EMEA']||0);if(sum>0)rows.push({type:tp,dao:row['DAO']||0,apj:row['APJ']||0,emea:row['EMEA']||0,sum:sum});});return rows;}
 function regionTable(rows,showTotal){var h='<table><tr><th>类型</th><th>DAO</th><th>APJ</th><th>EMEA</th><th>合计</th></tr>';var td=0,ta=0,te=0,ts=0;rows.forEach(function(r){td+=r.dao;ta+=r.apj;te+=r.emea;ts+=r.sum;h+='<tr><td><b>'+(r.type=='CTO_P1'?'⚡ CTO P1':r.type)+'</b></td><td class="n">'+fmt(r.dao)+'</td><td class="n">'+fmt(r.apj)+'</td><td class="n">'+fmt(r.emea)+'</td><td class="n"><b>'+fmt(r.sum)+'</b></td></tr>';});if(showTotal)h+='<tr style="border-top:2px solid var(--b2);"><td><b>合计</b></td><td class="n"><b>'+fmt(td)+'</b></td><td class="n"><b>'+fmt(ta)+'</b></td><td class="n"><b>'+fmt(te)+'</b></td><td class="n"><b>'+fmt(ts)+'</b></td></tr>';return h+'</table>';}
 window._shipFilters={};var _sfId=0;
@@ -300,5 +316,8 @@ window._pageRefresh = function() { load([]); };
 switchTab('prd'); load([]);
 </script>
 <script src="/nav.js"></script>
+<script src="/nav.js"></script>
+<script src="/drag.js"></script>
+<script>setTimeout(function(){var s=document.createElement("script");s.src="/drag.js";document.body.appendChild(s);},1000);</script>
 </body>
 </html>
