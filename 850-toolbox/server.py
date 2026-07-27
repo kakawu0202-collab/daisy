@@ -99,7 +99,6 @@ except Exception as _e:
 class OMSClient:
     def __init__(self):
         self.session = requests.Session()
-        self.session.trust_env = False
         self.session.headers.update({'Content-Type': 'application/json;charset=UTF-8',
                                      'User-Agent': 'Mozilla/5.0'})
         self.token = None
@@ -126,7 +125,7 @@ class OMSClient:
             r = self.session.get(OMS_URL + path, headers=h, timeout=30)
             return r.json() if r.ok else {'error': f'HTTP {r.status_code}'}
         except requests.exceptions.ConnectionError:
-            return {'error': f'连接 OMS 失败。请确认 VPN 已连接。'}
+            return {'error': f'连接 OMS 失败。公司网络无需VPN，外网需连VPN。确认 luxoms-vn-prod.luxshare-ict.com 可达。'}
         except Exception as e:
             return {'error': str(e)}
 
@@ -136,7 +135,7 @@ class OMSClient:
             r = self.session.post(OMS_URL + path, json=body, headers=h, timeout=60)
             return r.json() if r.ok else {'error': f'HTTP {r.status_code}: {r.text[:200]}'}
         except requests.exceptions.ConnectionError:
-            return {'error': f'连接 OMS 失败。请确认 VPN 已连接。'}
+            return {'error': f'连接 OMS 失败。公司网络无需VPN，外网需连VPN。确认 luxoms-vn-prod.luxshare-ict.com 可达。'}
         except Exception as e:
             return {'error': str(e)}
 
@@ -1153,6 +1152,12 @@ class ToolboxHandler(SimpleHTTPRequestHandler):
             if str(s_.get('PO','')).strip() in _prd_pos:
                 _prd_asn.add(str(s_.get('ASN','')).strip())
         shipped = sum(a.get('QTY', 0) or 0 for a in (_asn_k1 or []) if str(a.get('SN_STATUS','')).upper() in ('S','SN ACK') and str(a.get('ASN','')).strip() in _prd_asn)
+        # Build ASN-shipped PO set for consistent region breakdown
+        _asn_shipped_asn = set(str(a.get('ASN','')).strip() for a in (_asn_k1 or []) if str(a.get('SN_STATUS','')).upper() in ('S','SN ACK'))
+        _asn_shipped_set = set()
+        for s_ in (_ship_tmp or []):
+            if str(s_.get('ASN','')).strip() in _asn_shipped_asn:
+                _asn_shipped_set.add(str(s_.get('PO','')).strip())
 
         # Per-type shipped from ASN QTY (distribute by SHIP_QTY proportions)
         _type_shipped = {'CTO_P1': 0, 'FGA': 0, 'RTL': 0, 'CTO': 0}
@@ -1203,8 +1208,9 @@ class ToolboxHandler(SimpleHTTPRequestHandler):
                 xr[t][reg] = xr[t].get(reg,0) + (r[field] or 0)
             return xr
         xreg = build_xreg(records)
-        backlog_records = [r for r in records if not r.get('ACTUAL_SHIPPED')]
-        shipped_records = [r for r in records if r.get('ACTUAL_SHIPPED')]
+        # Use ASN S filter for shipped (same as the global 'shipped' variable)
+        backlog_records = [r for r in records if r.get('PO','').strip() not in _asn_shipped_set]
+        shipped_records = [r for r in records if r.get('PO','').strip() in _asn_shipped_set]
         backlog_xreg = build_xreg(backlog_records)
         shipped_xreg = build_xreg(shipped_records, 'SHIP_QTY')
 
