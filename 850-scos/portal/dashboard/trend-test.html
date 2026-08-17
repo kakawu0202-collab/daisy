@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Trend Tooltip Test</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+body{background:#0B1220;color:#eee;font-family:sans-serif;padding:20px}
+h1{font-size:16px;margin-bottom:16px}
+.chart-wrap{height:250px;margin-bottom:24px;background:#111A2E;border-radius:10px;padding:10px}
+.status{font-size:11px;color:#94a3b8;margin-bottom:8px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Trend Tooltip Debug</h1>
+<div class="status" id="status">Loading...</div>
+<div class="chart-wrap"><canvas id="c-ship-trend"></canvas></div>
+<div class="chart-wrap"><canvas id="c-order-trend"></canvas></div>
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+async function run(){
+  var st=document.getElementById('status');
+  try{
+    var d=await(await fetch('/api/daily-summary')).json();
+    st.textContent='daily date: '+d.date+'\n';
+    var st2=d.ship_trend||{};
+    var stLabels=Object.keys(st2).reverse();
+    var stTotal=[],stTypes=[],stScac=[];
+    stLabels.forEach(function(k){var v=st2[k]||{};
+      stTotal.push(v.total||0);
+      stTypes.push(v.by_type||{});
+      stScac.push(v.by_scac||{});});
+    st.textContent+='ship days: '+stLabels.length+'\n';
+    st.textContent+='last day types: '+JSON.stringify(stTypes[stTypes.length-1]||{})+'\n';
+    st.textContent+='last day scac: '+JSON.stringify(stScac[stScac.length-1]||{})+'\n';
+
+    new Chart(document.getElementById('c-ship-trend'),{type:'line',data:{labels:stLabels,datasets:[
+      {label:'Shipped (pcs)',data:stTotal,borderColor:'#22c55e',borderWidth:2,tension:.3,pointRadius:3,fill:true,backgroundColor:'rgba(34,197,94,0.08)'}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9}}},tooltip:{mode:'index',intersect:false,callbacks:{afterBody:function(items){st.textContent+='\nHOVER FIRED: items='+items.length;var i=items[0].dataIndex;var bt=stTypes[i]||{};var tp=Object.keys(bt).map(function(k){return k+':'+F(bt[k])});var sc=stScac[i]||{};var sp=Object.keys(sc).map(function(k){return k+':'+F(sc[k])});return['Type: '+(tp.join(' | ')||'--'),'Forwarder: '+(sp.join(' | ')||'--')];}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:10}},y:{ticks:{color:'#94a3b8',font:{size:8}}}}}});
+
+    var ot=d.order_trend||{};
+    var otLabels=Object.keys(ot).reverse(),otTotal=[],otTypes=[],otModes=[];
+    otLabels.forEach(function(k){var v=ot[k]||{};otTotal.push(v.qty||0);
+      otTypes.push({CTO_P1:v.cto_p1||0,FGA:v.fga||0,RTL:v.rtl||0,'CTO P2':v.cto_p2||0});
+      otModes.push(v.by_mode||{});});
+    st.textContent+='\norder days: '+otLabels.length;
+    new Chart(document.getElementById('c-order-trend'),{type:'line',data:{labels:otLabels,datasets:[{label:'Total',data:otTotal,borderColor:'#f0f4ff',borderWidth:2,tension:.3,pointRadius:3,fill:true,backgroundColor:'rgba(240,244,255,0.05)'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9}}},tooltip:{mode:'index',intersect:false,callbacks:{afterBody:function(items){var i=items[0].dataIndex;var bt=otTypes[i]||{};var tp=Object.keys(bt).map(function(k){return k+':'+F(bt[k])});var mo=otModes[i]||{};var mp=Object.keys(mo).map(function(k){return k+':'+F(mo[k])});return['Type: '+(tp.join(' | ')||'--'),'Mode: '+(mp.join(' | ')||'--')];}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:10}},y:{ticks:{color:'#94a3b8',font:{size:8}}}}}});
+    st.textContent+='\nCHARTS CREATED OK';
+  }catch(e){
+    st.textContent+='\nERROR: '+e.message+'\n'+e.stack;
+  }
+}
+run();
+</script>
+</body>
+</html>

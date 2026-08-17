@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>850 SCOS</title>
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<style>
+:root{--bg:#111827;--card:#1a2235;--card2:#1f2a40;--border:rgba(255,255,255,.06);--border-active:rgba(99,139,255,.20);--t1:#f0f4ff;--t2:#94a3be;--t3:#566382;--blue:#638fff;--r:12px;--nav-h:52px;--sb:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t1);padding:24px 16px calc(var(--nav-h) + var(--sb) + 8px) 16px;min-height:100vh}
+.top{margin-bottom:24px}.top h1{font-size:20px;font-weight:700}.top .t{font-size:11px;color:var(--t3);margin-top:2px}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;max-width:640px}
+.sec h3{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;font-weight:600}
+.links{display:flex;flex-direction:column;gap:8px}
+.links a{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--t2);text-decoration:none;font-size:12px;transition:all .15s}
+.links a:hover{border-color:var(--blue);color:var(--t1)}.links a .ic{font-size:20px;flex-shrink:0}
+.links a .lbl{font-weight:600;color:var(--t1)}.links a .sub{font-size:10px;color:var(--t3);margin-top:1px}
+.bn{display:flex;position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(17,24,39,.95);border-top:1px solid var(--border);z-index:150;padding-bottom:var(--sb);backdrop-filter:blur(12px)}
+.bn a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--t3);text-decoration:none;font-size:10px;gap:2px;min-height:44px}
+.bn a.ac,.bn a:hover{color:var(--blue)}.bn .bi{font-size:16px}.bn .bl{font-size:9px}
+@media(min-width:768px){.bn{display:none}body{padding:32px}}
+</style>
+</head>
+<body>
+<nav class="bn"><a href="/index.html" class="ac"><span class="bi">🏠</span><span class="bl">Home</span></a><a href="/k1.html"><span class="bi">📊</span><span class="bl">K1</span></a><a href="/cto-kpi.html"><span class="bi">📈</span><span class="bl">KPI</span></a><a href="/status.html"><span class="bi">🔧</span><span class="bl">Status</span></a></nav>
+
+<div class="top"><h1>850 SCOS</h1><div class="t">Supply Chain Operating System</div></div>
+
+<div class="sec"><h3>Quick Links</h3>
+  <div class="links">
+    <a href="/k1.html"><span class="ic">📊</span><div><div class="lbl">K1 PRD Dashboard</div><div class="sub">Order overview · Drill-down · Export CSV</div></div></a>
+    <a href="/cto-kpi.html"><span class="ic">📈</span><div><div class="lbl">CTO P1 28H KPI</div><div class="sub">Weekly/Monthly/Quarterly · MSBD · Kitting · Failures</div></div></a>
+    <a href="/e2e-kpi.html"><span class="ic">🔬</span><div><div class="lbl">E2E KPI Analytics</div><div class="sub">6 Process KPIs · Bottleneck · Exception drill-down</div></div></a>
+    <a href="/cto-analysis.html"><span class="ic">⚡</span><div><div class="lbl">CTO P1 E2E Analysis</div><div class="sub">Station pass rates · Bottleneck identification</div></div></a>
+    <a href="/status.html"><span class="ic">🔧</span><div><div class="lbl">System Status</div><div class="sub">Engine + Portal health monitoring</div></div></a>
+    <a href="/report-builder.html"><span class="ic">📝</span><div><div class="lbl">Report Builder</div><div class="sub">Custom fields · Filters · CSV export</div></div></a>
+    <a href="/admin.html"><span class="ic">👤</span><div><div class="lbl">Admin</div><div class="sub">User account management</div></div></a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>850 SCOS · Status</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--b2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#3b82f6;--g:#22c55e;--r:#ef4444;--a:#f59e0b;--rd:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);padding:24px;min-height:100vh}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.top h1{font-size:20px}.top .t{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--b2);border-radius:var(--rd);overflow:hidden}
+.ph{padding:14px 18px;border-bottom:1px solid var(--b2);display:flex;justify-content:space-between;align-items:center}
+.ph h2{font-size:13px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.on{background:var(--g)}.dot.off{background:var(--r)}.dot.wait{background:var(--a)}
+.pb{padding:8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.02)}
+.row:last-child{border-bottom:none}
+.row .l{color:var(--muted);font-size:11px}.row .v{font-weight:600;text-align:right}
+.v.g{color:var(--g)}.v.r{color:var(--r)}.v.a{color:var(--a)}
+.sec{padding:8px 18px 2px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.btns{margin-top:12px;display:flex;gap:8px}
+.btns button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<div class="top"><div><h1>850 SCOS Status</h1></div><div class="t" id="clock"></div></div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="ph"><h2>Data Engine (Company)</h2><span id="eng-dot" class="dot wait"></span></div>
+    <div class="pb" id="eng-body"><div class="row"><span class="l">Checking...</span></div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><h2>Portal (Yumin)</h2><span id="por-dot" class="dot wait"></span></div>
+    <div class="pb" id="por-body"><div class="row"><span class="l">Checking...</span></div></div>
+  </div>
+</div>
+
+<div class="btns"><button onclick="refresh()">Refresh</button><button onclick="trigger()" style="background:var(--g);color:#000;margin-left:8px">Trigger Sync</button><span id="trig-status" style="font-size:10px;color:var(--muted);margin-left:8px"></span></div>
+
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+var A=function(t){if(!t)return'--';var s=Math.floor((Date.now()-new Date(t))/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
+var T=function(t){if(!t)return'--';return new Date(t).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+var ENG_HOST='http://localhost:8700'
+
+function renderEngine(d){
+  if(!d||d.status!='ok'){document.getElementById('eng-dot').className='dot off';return'<div class=row><span class=l>Offline (port 8700)</span></div>'}
+  document.getElementById('eng-dot').className='dot on';var h=''
+  h+='<div class=sec>Engine</div>'+R('Status',d.running?'<span class=g>Running</span>':'<span class=r>Idle</span>')+R('Cycles','#'+(d.cycle||0))+R('Last Run',T(d.last_run)+' ('+A(d.last_run)+')')+R('Result',(d.last_result||'--').substring(0,60))
+  h+='<div class=sec>Push</div>'+R('Target',(d.push_target||'--').substring(0,40))+R('Status',(d.push_status||'--').includes('OK')?'<span class=g>OK</span>':(d.push_status||'--'))
+  h+='<div class=sec>Auto Resume</div>'+R('Network retry','<span class=g>Enabled</span>')
+  return h
+}
+
+function renderPortal(d){
+  if(!d||d.status!='ok'){document.getElementById('por-dot').className='dot off';return'<div class=row><span class=l>Offline (port 5050)</span></div>'}
+  document.getElementById('por-dot').className='dot on';var h=''
+  h+='<div class=sec>Service</div>'+R('Version',d.version||'--')+R('Uptime',T(d.server_time))
+  h+='<div class=sec>Data</div>'+R('Records',F(d.db_records||0))+R('Last Sync',T(d.last_sync_time))+R('Freshness','<span class="'+(A(d.last_sync_time).includes('d')||A(d.last_sync_time).includes('h')?'r':'g')+'">'+A(d.last_sync_time)+'</span>')
+  h+='<div class=sec>Cache</div>'+R('K1',d.k1_cached?'<span class=g>OK</span>':'<span class=a>--</span>')+R('KPI',d.kpi_cached?'<span class=g>OK</span>':'<span class=a>--</span>')
+  return h
+}
+function R(l,v){return'<div class=row><span class=l>'+l+'</span><span class=v>'+v+'</span></div>'}
+
+async function refresh(){
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US')
+  try{var pr=await fetch('/api/health');document.getElementById('por-body').innerHTML=renderPortal(await pr.json())}catch(e){document.getElementById('por-body').innerHTML=renderPortal(null)}
+  try{var er=await fetch(ENG_HOST+'/status');document.getElementById('eng-body').innerHTML=renderEngine(await er.json())}catch(e){document.getElementById('eng-body').innerHTML=renderEngine(null)}
+}
+async function trigger(){var s=document.getElementById('trig-status');s.textContent='Triggering...';try{await fetch('http://localhost:8700/trigger',{method:'POST'});s.innerHTML='<span style=color:var(--g)>Done. Refreshing in 60s...</span>';setTimeout(refresh,60000)}catch(e){s.innerHTML='<span style=color:var(--r)>Engine not running (port 8700)</span>'}}
+setInterval(refresh,30000);refresh()
+</script>
+</body>
+</html>

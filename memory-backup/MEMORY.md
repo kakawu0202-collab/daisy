@@ -1,0 +1,15 @@
+- [角色分工](role-assignment.md) — 4个工作伙伴：小P(PM)、小O(订单管理)、小C(物控生管)、小Z(助理)
+- [OMS工作流v2](oms-workflow-v2.md) — OMS数据拉取+K1看板+飞书推送完整流程（2026-06-21更新）
+- [K1 PRD看板](k1-prd-dashboard.md) — 飞书固定文档链接+更新流程+消息推送（2026-06-21）
+- [优先级排序工具](priority-sort-tool.md) — 订单/工单交互式排序HTML页面（2026-06-27）
+- [K1仪表盘重建方法](k1-dashboard-rebuild-method.md) — 从数据生成HTML全流程+Report API修复+避免的坑（2026-07-04）
+- [全链路办公自动化技能体系](fullstack-office-skills.md) — 集成SenseNova-Skills+Anthropic Skills+staticdash，覆盖数据→分析→看板→报告→PPT全链路（2026-07-05）
+- [项目追踪看板](project-tracker.md) — 单文件HTML看板，拖拽+筛选+子任务+进度追踪+暗色模式+数据导出，双击即用（2026-07-05）
+- [CTO P1 KPI公式](cto-p1-kpi-formula.md) — Planning/Build/Shuttle三段28H计算公式（2026-07-28）
+- [850 Toolbox V4.1](850-toolbox-pwa.md) — PWA+账号+ASN口径已出货+CTO28H精确匹配（2026-07-22）
+- [870 FGA优先级分配](fga870-allocation.md) — 同IPN+MCID组内分配：好产出上浮/缺料按材料集中下沉/A05落最低有产出PO，已纳入850toolbox（2026-07-11）
+- [AI-OS](ai-os.md) — 个人AI操作系统：语义层+Agent系统+知识库+数据库，跨模型可移植（2026-07-26）
+- [850 Supply Chain OS](850-supply-chain-os.md) — **开发蓝图**：五层架构（Data Engine + Business Engine + Service Layer + AI Engine + Portal），替代旧850AI架构（2026-08-01）
+- [850AI项目架构](850ai-project-architecture.md) — 旧架构方案，已被850 SCOS蓝图替代
+- [850 业务规则](850-business-rules.md) — 风险判定/NACK处理/KPI考核标准，Business Engine核心输入（2026-08-02）
+- [850 数据字典](850-data-dictionary.md) — 完整字段参考：订单/物流/生产/出货/KPI/数据源（2026-08-02）

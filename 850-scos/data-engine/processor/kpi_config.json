@@ -1,0 +1,22 @@
+{
+  "planning": {"name":"Planning","start":"PO_RECEIVE_DATE","end":"MR_CDT","sla_hours":11,"goal":0.75},
+  "kitting":{"name":"Kitting","start":"SCH_CDT","end":"MR_CDT","sla_hours":3,"goal":0.75},
+  "build":{"name":"Build","start":"INPUT_CDT","end":"STOCKIN_CDT","sla_hours":12,"goal":0.75},
+  "shipment":{"name":"Shipment","start":"STOCKIN_CDT","end":"SHIPMENT_CDT","sla_hours":1,"goal":0.75},
+  "shuttle":{"name":"Shuttle","start":"STOCKIN_CDT","end":"SN_CDT","sla_hours":5,"goal":0.85},
+  "cto_p1_clean":{
+    "name":"CTO P1 28H (Clean)",
+    "start":"PO_RECEIVE_DATE","end":"SN_CDT","sla_hours":28,"goal":0.75,
+    "priority_filter":"1","clean_only":true
+  },
+  "cto_p1_48h":{
+    "name":"CTO P1 48H (Non-Clean)",
+    "start":"PO_RECEIVE_DATE","end":"SN_CDT","sla_hours":48,"goal":0.75,
+    "priority_filter":"1","non_clean_only":true
+  },
+  "msbd":{
+    "name":"MSBD On-Time",
+    "start":"MSBD","end":"SN_CDT","sla_hours":0,"goal":0.85,
+    "population":"shipped","type":"datetime_compare"
+  }
+}

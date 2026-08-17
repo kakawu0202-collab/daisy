@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTO P1 KPI · 850 SCOS</title>
+<style>
+:root{--bg:#0b1121;--card:#141e33;--card2:#1a2942;--border:rgba(148,163,184,.08);--t1:#f0f4ff;--t2:#94a3be;--t3:#475569;--accent:#638fff;--g:#3dd68c;--a:#f5b842;--r:#e5484d;--ra:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t1);padding:20px;font-size:13px;line-height:1.5}
+h1{font-size:18px;margin-bottom:4px}.sub{font-size:11px;color:var(--t3);margin-bottom:18px}
+.bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.bar a,.bar button,.bar select{background:var(--card);color:var(--t2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;text-decoration:none;font-size:11px;cursor:pointer}.bar .ac{border-color:var(--accent);color:var(--accent)}
+.kpi-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:640px){.kpi-cards{grid-template-columns:1fr}}
+.kc{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:18px;text-align:center}
+.kc .l{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kc .v{font-size:30px;font-weight:800}.kc .d{font-size:10px;color:var(--t3);margin-top:4px}
+.kc .g{height:4px;background:var(--card2);border-radius:2px;margin-top:8px;overflow:hidden}.kc .g .f{height:100%;border-radius:2px}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:16px;margin-bottom:14px;overflow:auto}
+.sec h3{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+th{text-align:left;padding:7px 10px;background:var(--card2);color:var(--t3);font-size:9px;font-weight:600;border-bottom:2px solid var(--border);position:sticky;top:0}
+td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.03)}.n{text-align:right}
+.pa{color:var(--g)}.fa{color:var(--r)}.op{color:var(--a)}
+.chart-wrap{height:260px;margin-top:8px}
+.fails{max-height:400px;overflow:auto}
+input,select{background:var(--card2);color:var(--t1);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="bar"><a href="/index.html">Home</a><a href="/e2e-kpi.html">E2E KPI</a><button onclick="load()">Refresh</button>
+  <select id="period" onchange="renderAll()"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option></select>
+  <select id="period-val" onchange="renderAll()"><option>--</option></select>
+</div>
+
+<h1>CTO P1 28H KPI</h1>
+<div class="sub">Week: Sat-Fri · Quarter: Feb-Apr(Q1) · Clean=No hold history</div>
+
+<div class="kpi-cards" id="cards"></div>
+
+<div class="sec"><h3>28H Metrics</h3><table><thead id="metric-head"></thead><tbody id="metric-body"></tbody></table></div>
+
+<div class="sec"><h3>MSBD On-Time Rate <button onclick="downloadMSBD()" style="margin-left:8px;font-size:10px;background:var(--card2);color:var(--t2);border:1px solid var(--border);border-radius:4px;padding:3px 10px;cursor:pointer">Excel</button></h3><div id="msbd-section"></div></div>
+
+<div class="sec"><h3>Failures <button onclick="downloadFails()" style="margin-left:8px;font-size:10px;background:var(--card2);color:var(--t2);border:1px solid var(--border);border-radius:4px;padding:3px 10px;cursor:pointer">Excel</button></h3><div class="fails"><table><thead><tr><th>PO</th><th>Priority</th><th>KPI</th><th class=n>Hours</th><th class=n>SLA</th><th class=n>Over</th><th>Clean</th><th>Week</th></tr></thead><tbody id="fail-body"></tbody></table></div></div>
+
+<div class="sec"><h3>Weekly Trend</h3><div class="chart-wrap"><canvas id="c-trend"></canvas></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+var data=null,kpis={},weekly={},monthly={},quarterly={},allEx=[]
+
+async function load(){
+  try{data=await(await fetch('/api/cache/e2e_kpi')).json()}catch(e){document.body.innerHTML='No data';return}
+  kpis=data.kpis||{};allEx=data.exceptions||[];weekly=data.weekly||{};monthly=data.monthly||{};quarterly=data.quarterly||{}
+  var pd=Object.keys(weekly).sort()
+  document.getElementById('period-val').innerHTML=pd.map(function(p){return'<option>'+p+'</option>'}).join('')
+  renderAll()
+}
+
+function getPeriod(){var t=document.getElementById('period').value;return t==='weekly'?weekly:t==='monthly'?monthly:quarterly}
+function getPeriodLabel(){var t=document.getElementById('period').value;return t==='weekly'?'WK':t==='monthly'?'Month':'Quarter'}
+
+function renderAll(){
+  var pd=getPeriod(),sel=document.getElementById('period-val').value||Object.keys(pd).sort().pop()||''
+  var pdata=pd[sel]||{},label=getPeriodLabel()
+
+  // Cards
+  var clean=kpis.cto_p1_clean||{},c48=kpis.cto_p1_48h||{},msbd=kpis.msbd||{}
+  var cp=pdata.cto_p1_clean||{},c48p=pdata.cto_p1_48h||{},mp=pdata.msbd||{}
+  function card(v,total,pass,goal,name){
+    if(!total)total=v.total||0;if(!pass)pass=v.pass||0
+    var pct=v.pass_pct!=null?v.pass_pct:Math.round(pass/Math.max(total,1)*100)
+    return '<div class=kc><div class=l>'+name+'</div><div class=v style=color:'+(pct>=goal*100?'var(--g)':'var(--r)')+'>'+pct+'%</div><div class=d>'+pass+' / '+total+' ('+label+' '+sel+')</div><div class=g><div class=f style=width:'+Math.min(pct,100)+'%;background:'+(pct>=goal*100?'var(--g)':'var(--r)')+'></div></div></div>'
+  }
+  document.getElementById('cards').innerHTML=
+    card(cp||clean,cp.total,cp.pass,0.75,'CTO P1 28H Clean')+
+    card(c48p||c48,c48p.total,c48p.pass,0.75,'CTO P1 48H Non-Clean')+
+    card(mp||msbd,mp.total,mp.pass,0.85,'MSBD On-Time')
+
+  // Metrics table
+  var metrics=['planning','kitting','build','shipment','shuttle','cto_p1_clean','cto_p1_48h','msbd']
+  var metricLabels={planning:'Planning 11H',kitting:'Kitting 3H',build:'Build 12H',shipment:'Shipment 1H',shuttle:'Shuttle 5H','cto_p1_clean':'CTO P1 28H Clean','cto_p1_48h':'CTO P1 48H Non-Clean',msbd:'MSBD On-Time'}
+  var periods=Object.keys(pd).sort()
+  var recent=periods.slice(-8)
+  document.getElementById('metric-head').innerHTML='<tr><th>Metric</th><th class=n>Goal</th>'+recent.map(function(p){return'<th class=n>'+p+'</th>'}).join('')+'<th class=n>'+label+' Avg</th></tr>'
+  document.getElementById('metric-body').innerHTML=metrics.map(function(m){
+    var cfg=kpis[m]||{goal:0.75,sla_hours:0,name:m}
+    var cells=recent.map(function(p){var v=(pd[p]||{})[m]||{};var pct=v.pass_pct!=null?v.pass_pct:0;return'<td class="n '+(pct>=cfg.goal*100?'pa':'fa')+'">'+pct+'%</td>'}).join('')
+    var avgPct=pdata[m]?pdata[m].pass_pct:0
+    return'<tr><td>'+metricLabels[m]+'</td><td class=n>'+Math.round(cfg.goal*100)+'%</td>'+cells+'<td class="n '+(avgPct>=cfg.goal*100?'pa':'fa')+'">'+(avgPct?avgPct+'%':'--')+'</td></tr>'
+  }).join('')
+
+  // MSBD section
+  var msbdEx=allEx.filter(function(x){return x.kpi==='msbd'}).filter(function(x){return x.week===sel||!sel})
+  var msbdP=msbdEx.filter(function(x){return x.status==='PASS'})
+  var msbdF=msbdEx.filter(function(x){return x.status==='FAIL'})
+  document.getElementById('msbd-section').innerHTML='Total: <b>'+msbdEx.length+'</b> | PASS: <b class=pa>'+msbdP.length+'</b> | FAIL: <b class=fa>'+msbdF.length+'</b> | Rate: <b>'+(msbdEx.length?Math.round(msbdP.length/msbdEx.length*100)+'%':'--')+'</b>'
+
+  // Failures
+  var fails=allEx.filter(function(x){return x.status==='FAIL'})
+  var fp=(sel?fails.filter(function(x){return x.week===sel}):fails)
+  document.getElementById('fail-body').innerHTML=fp.slice(0,200).map(function(x){
+    return'<tr><td>'+x.po+'</td><td>'+x.priority+'</td><td>'+x.kpi+'</td><td class=n>'+(x.elapsed_hours!=null?x.elapsed_hours+'H':'--')+'</td><td class=n>'+x.sla_hours+'H</td><td class="n fa">'+(x.over_hours>0?x.over_hours+'H':'')+'</td><td>'+(x.clean?'Y':'N')+'</td><td>'+x.week+'</td></tr>'
+  }).join('')
+
+  // Chart
+  setTimeout(function(){
+    var ctx=document.getElementById('c-trend');if(!ctx)return
+    var c=Chart.getChart('c-trend');if(c)c.destroy()
+    var labels=[],cleanD=[],c48D=[]
+    periods.forEach(function(p){var d=pd[p]||{};var cl=d.cto_p1_clean||{},c2=d.cto_p1_48h||{};labels.push(p);cleanD.push(cl.pass_pct||null);c48D.push(c2.pass_pct||null)})
+    new Chart(ctx,{type:'line',data:{labels:labels,datasets:[
+      {label:'CTO P1 28H Clean',data:cleanD,borderColor:'#3dd68c',tension:.2,pointRadius:2},
+      {label:'CTO P1 48H Non-Clean',data:c48D,borderColor:'#f5b842',tension:.2,pointRadius:2,borderDash:[4,2]},
+      {label:'Goal 75%',data:labels.map(function(){return 75}),borderColor:'#475569',borderDash:[2,2],pointRadius:0}
+    ]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{color:'#475569',font:{size:9}}},x:{ticks:{color:'#475569',font:{size:9},maxTicksLimit:12}}},plugins:{legend:{position:'bottom',labels:{color:'#94a3be',font:{size:9},padding:6,boxWidth:10}}}}})
+  },300)
+}
+
+function downloadFails(){
+  var csv='PO,Priority,KPI,Hours,SLA,Over,Clean,Week\n'
+  allEx.filter(function(x){return x.status==='FAIL'}).forEach(function(x){csv+=x.po+','+x.priority+','+x.kpi+','+(x.elapsed_hours||'')+','+x.sla_hours+','+x.over_hours+','+x.clean+','+x.week+'\n'})
+  download(csv,'cto_failures.csv')
+}
+
+function downloadMSBD(){
+  var csv='PO,Priority,MSBD,SN_CDT,Diff(H),Status,Week\n'
+  allEx.filter(function(x){return x.kpi==='msbd'}).forEach(function(x){csv+=x.po+','+x.priority+',,,'+x.elapsed_hours+','+x.status+','+x.week+'\n'})
+  download(csv,'msbd_report.csv')
+}
+
+function download(csv,fn){var b=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click()}
+
+load()
+</script>
+</body>
+</html>

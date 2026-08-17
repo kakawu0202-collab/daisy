@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theme Showcase · 850 SCOS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#111;color:#eee;padding:24px;min-height:100vh}
+h1{font-size:20px;margin-bottom:4px}.sub{font-size:12px;color:#888;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.panel{border-radius:14px;overflow:hidden}
+.ph{padding:14px 18px;font-weight:600;font-size:13px}
+.pb{padding:18px}
+.row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px}
+.card{padding:14px;border-radius:10px;text-align:center}
+.card .v{font-size:26px;font-weight:800;margin-bottom:2px}.card .l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;opacity:.6}
+.bar{height:6px;border-radius:3px;margin-top:8px}
+/* Tokyo Night */
+.t-tokyo{background:#1a1b26;border:1px solid rgba(192,202,245,.12)}
+.t-tokyo .ph{background:#24283b;color:#c0caf5;border-bottom:1px solid rgba(192,202,245,.12)}
+.t-tokyo .card{background:#2f334d;color:#c0caf5}.t-tokyo .card .v{color:#7aa2f7}
+.t-tokyo .bar{background:rgba(122,162,247,.3)}.t-tokyo .bar .fill{background:#7aa2f7;height:100%;border-radius:3px}
+/* Dracula */
+.t-dracula{background:#282a36;border:1px solid rgba(248,248,242,.12)}
+.t-dracula .ph{background:#343746;color:#f8f8f2;border-bottom:1px solid rgba(248,248,242,.12)}
+.t-dracula .card{background:#44475a;color:#f8f8f2}.t-dracula .card .v{color:#bd93f9}
+.t-dracula .bar{background:rgba(189,147,249,.3)}.t-dracula .bar .fill{background:#bd93f9;height:100%;border-radius:3px}
+/* Catppuccin Mocha */
+.t-catp{background:#1e1e2e;border:1px solid rgba(205,214,244,.12)}
+.t-catp .ph{background:#313244;color:#cdd6f4;border-bottom:1px solid rgba(205,214,244,.12)}
+.t-catp .card{background:#45475a;color:#cdd6f4}.t-catp .card .v{color:#cba6f7}
+.t-catp .bar{background:rgba(203,166,247,.3)}.t-catp .bar .fill{background:#cba6f7;height:100%;border-radius:3px}
+/* Nord */
+.t-nord{background:#2e3440;border:1px solid rgba(236,239,244,.12)}
+.t-nord .ph{background:#3b4252;color:#eceff4;border-bottom:1px solid rgba(236,239,244,.12)}
+.t-nord .card{background:#434c5e;color:#eceff4}.t-nord .card .v{color:#88c0d0}
+.t-nord .bar{background:rgba(136,192,208,.3)}.t-nord .bar .fill{background:#88c0d0;height:100%;border-radius:3px}
+</style>
+</head>
+<body>
+<h1>850 SCOS · 主题预览</h1>
+<div class="sub">四个暗色主题，点击选择后应用到首页</div>
+
+<div class="grid">
+  <div class="panel t-tokyo" onclick="pick('tokyo')" style="cursor:pointer">
+    <div class="ph">🌃 Tokyo Night <span style="font-weight:400;font-size:10px;opacity:.6">当前使用</span></div>
+    <div class="pb">
+      <div class="row">
+        <div class="card"><div class="v">116,512</div><div class="l">PRD 总台数</div></div>
+        <div class="card"><div class="v">40,003</div><div class="l">Backlog</div></div>
+      </div>
+      <div class="row">
+        <div class="card"><div class="v">96%</div><div class="l">CTO P1 28H</div></div>
+        <div class="card"><div class="v">76,509</div><div class="l">已出货</div></div>
+      </div>
+      <div class="bar"><div class="fill" style="width:66%"></div></div>
+      <div style="font-size:9px;opacity:.4;margin-top:4px;text-align:right">出货进度 66%</div>
+    </div>
+  </div>
+
+  <div class="panel t-dracula" onclick="pick('dracula')" style="cursor:pointer">
+    <div class="ph">🧛 Dracula <span style="font-weight:400;font-size:10px;opacity:.6">经典暗色</span></div>
+    <div class="pb">
+      <div class="row">
+        <div class="card"><div class="v">116,512</div><div class="l">PRD 总台数</div></div>
+        <div class="card"><div class="v">40,003</div><div class="l">Backlog</div></div>
+      </div>
+      <div class="row">
+        <div class="card"><div class="v">96%</div><div class="l">CTO P1 28H</div></div>
+        <div class="card"><div class="v">76,509</div><div class="l">已出货</div></div>
+      </div>
+      <div class="bar"><div class="fill" style="width:66%"></div></div>
+      <div style="font-size:9px;opacity:.4;margin-top:4px;text-align:right">出货进度 66%</div>
+    </div>
+  </div>
+
+  <div class="panel t-catp" onclick="pick('catppuccin')" style="cursor:pointer">
+    <div class="ph">🍵 Catppuccin Mocha <span style="font-weight:400;font-size:10px;opacity:.6">柔和暖暗</span></div>
+    <div class="pb">
+      <div class="row">
+        <div class="card"><div class="v">116,512</div><div class="l">PRD 总台数</div></div>
+        <div class="card"><div class="v">40,003</div><div class="l">Backlog</div></div>
+      </div>
+      <div class="row">
+        <div class="card"><div class="v">96%</div><div class="l">CTO P1 28H</div></div>
+        <div class="card"><div class="v">76,509</div><div class="l">已出货</div></div>
+      </div>
+      <div class="bar"><div class="fill" style="width:66%"></div></div>
+      <div style="font-size:9px;opacity:.4;margin-top:4px;text-align:right">出货进度 66%</div>
+    </div>
+  </div>
+
+  <div class="panel t-nord" onclick="pick('nord')" style="cursor:pointer">
+    <div class="ph">❄️ Nord <span style="font-weight:400;font-size:10px;opacity:.6">北欧冷淡</span></div>
+    <div class="pb">
+      <div class="row">
+        <div class="card"><div class="v">116,512</div><div class="l">PRD 总台数</div></div>
+        <div class="card"><div class="v">40,003</div><div class="l">Backlog</div></div>
+      </div>
+      <div class="row">
+        <div class="card"><div class="v">96%</div><div class="l">CTO P1 28H</div></div>
+        <div class="card"><div class="v">76,509</div><div class="l">已出货</div></div>
+      </div>
+      <div class="bar"><div class="fill" style="width:66%"></div></div>
+      <div style="font-size:9px;opacity:.4;margin-top:4px;text-align:right">出货进度 66%</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function pick(t){localStorage.setItem('scos-theme',t);alert('已选择 '+t+' 主题。刷新首页生效。');location.href='/index.html'}
+</script>
+</body>
+</html>

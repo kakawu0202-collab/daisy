@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTO P1 · 生产状态 & 风险</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--b2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#8b5cf6;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:24px;min-height:100vh}
+h1{font-size:20px;margin-bottom:4px}
+.sub{font-size:11px;color:var(--muted);margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--b2);border-radius:var(--r);padding:20px}
+.card h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+/* Big number */
+.big{font-size:48px;font-weight:800;line-height:1}
+.big-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* Progress bar */
+.pbar{height:10px;background:var(--b2);border-radius:5px;margin:10px 0;overflow:hidden}
+.pbar-fill{height:100%;border-radius:5px;transition:width .5s}
+/* Pipeline */
+.pipe{display:flex;align-items:center;gap:4px;margin:12px 0}
+.pipe-step{flex:1;text-align:center;padding:10px 4px;border-radius:8px;font-size:10px}
+.pipe-step .num{font-size:20px;font-weight:700;display:block}
+.pipe-step .tag{font-size:9px;color:var(--muted)}
+.pipe-arrow{color:var(--muted);font-size:14px;flex-shrink:0}
+/* Risk indicators */
+.risk-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.risk-tag{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.risk-high{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.risk-mid{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.risk-low{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+/* KPI 3-segment */
+.kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center}
+.kpi3-item .num{font-size:24px;font-weight:700}
+.kpi3-item .lbl{font-size:10px;color:var(--muted);margin-top:2px}
+.kpi3-item .detail{font-size:9px;color:var(--muted);margin-top:2px}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+th{text-align:left;padding:6px 8px;background:rgba(59,130,246,.08);color:var(--accent);font-size:9px}
+td{padding:6px 8px;border-bottom:1px solid var(--b2)}
+.n{text-align:right}
+.row-hi td{background:rgba(239,68,68,.05)}
+/* Section highlight */
+.alert-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.alert-box .al-title{font-size:11px;color:var(--red);font-weight:600;margin-bottom:6px}
+.alert-box .al-item{font-size:11px;padding:3px 0;display:flex;justify-content:space-between}
+.alert-box .al-item .al-v{font-weight:600}
+.foot{margin-top:16px;display:flex;gap:8px}
+.foot button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<h1>⚡ CTO P1 · 生产状态 & 风险</h1>
+<div class="sub">28H KPI · 生产进度 · MSBD 出货计划</div>
+
+<!-- Alert box -->
+<div class="alert-box" id="alerts" style="display:none"></div>
+
+<!-- Top KPI row -->
+<div class="grid3" id="kpi-row"></div>
+
+<!-- KPI 3-segment -->
+<div class="card" id="kpi-segment-card" style="margin-bottom:16px">
+  <h3>📐 28H 三段达标率 (Planning · Build · Shuttle)</h3>
+  <div class="kpi3" id="kpi-segments"></div>
+</div>
+
+<!-- Pipeline + Risk -->
+<div class="grid2">
+  <div class="card">
+    <h3>🏭 CTO P1 生产流水线</h3>
+    <div class="pipe" id="pipeline"></div>
+    <div class="risk-row" id="pipe-risks"></div>
+  </div>
+  <div class="card">
+    <h3>⚡ 28H 时间线 (计划 vs 实际)</h3>
+    <div id="timeline-table"></div>
+  </div>
+</div>
+
+<!-- MSBD -->
+<div class="card" style="margin-top:16px">
+  <h3>📅 MSBD 出货计划 (非CTO P1) — 计划 vs 已出</h3>
+  <div id="msbd-table"></div>
+</div>
+
+<div class="foot">
+  <button onclick="loadAll()">🔄 刷新</button>
+</div>
+
+<script>
+var F=function(n){return(n||0).toLocaleString()};
+
+async function loadAll(){
+  var k1=null,kpi=null;
+  // Data from 850-toolbox (or Yumin Portal)
+  try{var r1=await fetch('http://localhost:5050/api/k1-summary');k1=await r1.json()}catch(e){}
+  if(!k1||k1.error){try{var r1b=await fetch('http://localhost:8500/api/k1-summary');k1=await r1b.json()}catch(e){}}
+  try{var r2=await fetch('http://localhost:8500/api/cto-kpi');kpi=await r2.json()}catch(e){}
+
+  if(!k1||k1.error){document.body.innerHTML='<div style=padding:40px;color:var(--red)>无法获取数据，请确认服务在运行</div>';return}
+  render(k1,kpi);
+}
+
+function render(k1,kpi){
+  // ── Alerts ──────────────────────────────────────────────
+  var alerts=[];
+  var cg=k1.cto_p1_gpp||{};
+  var cTotal=(cg.stbl||0)+(cg.atb||0)+(cg.wip||0)+(cg.fg||0)+(cg.sn||0);
+  if(cTotal===0)cTotal=1;
+  if((cg.stbl||0)/cTotal>0.3)alerts.push({v:F(cg.stbl||0)+' pcs',t:'STBL 占比 >30%，物料就绪风险高'});
+  if((cg.atb||0)/cTotal>0.4&&(cg.wip||0)/cTotal<0.1)alerts.push({v:F(cg.atb||0)+' pcs',t:'ATB 积压，产线投入瓶颈'});
+  if((cg.fg||0)>0&&(cg.sn||0)/(cg.fg||0)<0.3)alerts.push({v:F(cg.fg||0)+' pcs FG',t:'成品待出货，SN 滞后'});
+
+  var tl=k1.cto_timeline||[];
+  for(var i=0;i<tl.length;i++){
+    if(tl[i].today&&tl[i].planned>tl[i].actual){
+      alerts.push({v:F(tl[i].planned-tl[i].actual)+' pcs',t:'今日 CTO P1 28H 到期未出'});
+      break;
+    }
+  }
+  var ab=document.getElementById('alerts');
+  if(alerts.length){
+    ab.style.display='';
+    ab.innerHTML='<div class=al-title>⚠️ 风险预警</div>'+alerts.map(function(a){return'<div class=al-item><span>'+a.t+'</span><span class=al-v>'+a.v+'</span></div>'}).join('');
+  }else{ab.style.display='none'}
+
+  // ── KPI row ─────────────────────────────────────────────
+  var cr=Math.round((k1.cto_p1_shipped||0)/Math.max(k1.cto_p1_qty||1,1)*100);
+  var kpiHtml='<div class=card><h3>28H 达标率</h3><div class=big style=color:'+(cr>=95?'var(--green)':cr>=80?'var(--amber)':'var(--red)')+'>'+cr+'%</div><div class=big-label>已出 '+F(k1.cto_p1_shipped||0)+' / '+F(k1.cto_p1_qty||0)+' pcs</div><div class=pbar><div class=pbar-fill style=width:'+cr+'%;background:'+(cr>=95?'var(--green)':cr>=80?'var(--amber)':'var(--red)')+'></div></div></div>';
+  kpiHtml+='<div class=card><h3>📦 总量</h3><div class=big>'+F(k1.cto_p1_count||0)+'</div><div class=big-label>条 PO</div><div style=font-size:11px;color:var(--muted);margin-top:8px>未出: '+F(k1.cto_p1_unshipped||0)+' pcs</div></div>';
+  var missRisk=0;
+  for(var i=0;i<tl.length;i++){if(tl[i].today){missRisk=Math.max(0,(tl[i].planned||0)-(tl[i].actual||0));break}}
+  kpiHtml+='<div class=card><h3>⚠️ Miss 风险</h3><div class=big style=color:'+(missRisk>0?'var(--red)':'var(--green)')+'>'+F(missRisk)+'</div><div class=big-label>今日到期未出 pcs</div></div>';
+  document.getElementById('kpi-row').innerHTML=kpiHtml;
+
+  // ── 28H segments ────────────────────────────────────────
+  if(kpi&&!kpi.error){
+    var p28=kpi.p28||{},pp=kpi.pp||{},pb=kpi.pb||{},ps=kpi.ps||{};
+    document.getElementById('kpi-segments').innerHTML=
+      '<div class=kpi3-item><div class=num style=color:var(--accent)>'+(pp.pct||0)+'%</div><div class=lbl>Planning 11H</div><div class=detail>达标 '+(pp.ok||0)+'/'+(pp.total||0)+' | 未达标 '+(pp.fail||0)+'</div></div>'+
+      '<div class=kpi3-item><div class=num style=color:var(--amber)>'+(pb.pct||0)+'%</div><div class=lbl>Build 12H</div><div class=detail>达标 '+(pb.ok||0)+'/'+(pb.total||0)+' | 未达标 '+(pb.fail||0)+'</div></div>'+
+      '<div class=kpi3-item><div class=num style=color:var(--green)>'+(ps.pct||0)+'%</div><div class=lbl>Shuttle 5H</div><div class=detail>达标 '+(ps.ok||0)+'/'+(ps.total||0)+' | 未达标 '+(ps.fail||0)+'</div></div>';
+  }else{
+    document.getElementById('kpi-segment-card').style.display='none';
+  }
+
+  // ── Pipeline ────────────────────────────────────────────
+  var steps=[{k:'stbl',n:'STBL',c:'#64748b',desc:'待料'},{k:'atb',n:'ATB',c:'#f59e0b',desc:'备料完成'},{k:'wip',n:'WIP',c:'#3b82f6',desc:'产线中'},{k:'fg',n:'FG',c:'#22c55e',desc:'成品入库'},{k:'sn',n:'SN',c:'#8b5cf6',desc:'已出货'}];
+  document.getElementById('pipeline').innerHTML=steps.map(function(s,i){
+    var v=cg[s.k]||0,cls='risk-low';if(i===0&&v/cTotal>0.3)cls='risk-high';if(i===3&&v>0&&(cg.sn||0)/Math.max(v,1)<0.3)cls='risk-mid';
+    return (i>0?'<span class=pipe-arrow>→</span>':'')+'<div class=pipe-step style=background:'+s.c+'22;border:1px solid '+s.c+'44><span class=num style=color:'+s.c+'>'+F(v)+'</span><span class=tag>'+s.n+'<br>'+s.desc+'</span></div>';
+  }).join('');
+
+  var risks=[];
+  if((cg.stbl||0)/cTotal>0.3)risks.push({t:'STBL积压',c:'risk-high'});
+  if((cg.atb||0)/cTotal>0.4)risks.push({t:'ATB瓶颈',c:'risk-mid'});
+  if((cg.wip||0)/cTotal<0.05)risks.push({t:'WIP不足',c:'risk-mid'});
+  if((cg.fg||0)>0&&(cg.sn||0)<(cg.fg||0))risks.push({t:'出货滞后',c:'risk-mid'});
+  if(risks.length===0)risks.push({t:'正常',c:'risk-low'});
+  document.getElementById('pipe-risks').innerHTML=risks.map(function(r){return'<span class="risk-tag '+r.c+'">'+r.t+'</span>'}).join('');
+
+  // ── 28H Timeline ────────────────────────────────────────
+  var th='<table><tr><th>日期</th><th>计划 pcs</th><th>实际 pcs</th><th>差距</th><th>状态</th></tr>';
+  var showTl=tl.filter(function(x){return x.planned>0||x.actual>0});
+  if(showTl.length===0){showTl=tl.slice(-7)}
+  showTl.forEach(function(x){
+    var gap=x.planned-x.actual,st=x.planned===x.actual&&x.planned>0?'✅ 完成':x.past&&gap>0?'⚠️ 逾期':x.today&&gap>0?'🔴 今日风险':'';
+    th+='<tr'+(gap>0?' class=row-hi':'')+'><td>'+x.date+(x.today?' 🎯':'')+'</td><td class=n>'+F(x.planned)+'</td><td class=n>'+F(x.actual)+'</td><td class=n style=color:'+(gap>0?'var(--red)':'var(--green)')+'>'+(gap>0?'-'+F(gap):F(Math.abs(gap)))+'</td><td>'+st+'</td></tr>';
+  });
+  document.getElementById('timeline-table').innerHTML=th+'</table>';
+
+  // ── MSBD Plan ───────────────────────────────────────────
+  var msbd=k1.msbd_plan||[];
+  var mh='<table><tr><th>日期</th><th>计划 pcs</th><th>实际 pcs</th><th>差距</th><th>状态</th></tr>';
+  msbd.forEach(function(x){
+    var gap=x.planned-x.actual,st=x.incomplete?'⚠️ 未完成':x.planned===x.actual&&x.planned>0?'✅ 完成':gap>0?'🟡 进行中':'';
+    mh+='<tr'+(x.incomplete?' class=row-hi':'')+'><td>'+x.date+'</td><td class=n>'+F(x.planned)+'</td><td class=n>'+F(x.actual)+'</td><td class=n style=color:'+(gap>0?'var(--red)':'var(--green)')+'>'+(gap>0?'-'+F(gap):'+'+F(Math.abs(gap)))+'</td><td>'+st+'</td></tr>';
+  });
+  document.getElementById('msbd-table').innerHTML=mh+'</table>';
+}
+
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>850 SCOS · 系统状态</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--b2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:24px;min-height:100vh}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.top h1{font-size:20px;font-weight:700}
+.top .ver{font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px}
+.top .time{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--b2);border-radius:var(--r);overflow:hidden}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--b2);display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:13px;font-weight:600}
+.panel-body{padding:8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.02)}
+.row:last-child{border-bottom:none}
+.row .label{color:var(--muted);font-size:11px}
+.row .value{font-weight:600;font-size:12px;text-align:right}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0}
+.sdot-online{background:var(--green)}
+.sdot-offline{background:var(--red)}
+.sdot-wait{background:var(--amber)}
+.value.good{color:var(--green)}.value.bad{color:var(--red)}.value.warn{color:var(--amber)}
+.divider{border-top:1px solid var(--b2);margin:4px 0}
+.section-label{padding:10px 18px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.foot{display:flex;gap:12px;align-items:center;margin-top:8px}
+.foot button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.foot button:hover{opacity:.9}
+.foot .hint{font-size:11px;color:var(--muted)}
+.spin{animation:spin 1s linear infinite}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.skeleton{background:var(--b2);border-radius:4px;height:12px;width:60%;animation:pulse 1.5s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.error-block{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:16px;margin:12px 18px;font-size:12px}
+.error-block .err-title{color:var(--red);font-weight:600;margin-bottom:4px}
+.error-block .err-detail{color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div><h1>850 Supply Chain OS<span class="ver">V1</span></h1></div>
+  <div class="time" id="clock"></div>
+</div>
+
+<div class="grid">
+  <!-- ═══ Data Engine ═══ -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>🏭 Data Engine</h2>
+      <span id="engine-dot" class="status-dot sdot-wait"></span>
+    </div>
+    <div class="panel-body" id="engine-body">
+      <div class="row"><span class="label skeleton"></span><span class="value skeleton"></span></div>
+    </div>
+  </div>
+
+  <!-- ═══ Yumin Portal ═══ -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>🌐 Yumin Portal</h2>
+      <span id="portal-dot" class="status-dot sdot-wait"></span>
+    </div>
+    <div class="panel-body" id="portal-body">
+      <div class="row"><span class="label skeleton"></span><span class="value skeleton"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <button onclick="refresh()">🔄 刷新</button>
+  <span class="hint">每 30 秒自动刷新</span>
+</div>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────
+var F=function(n){return(n||0).toLocaleString()};
+var A=function(t){if(!t)return'--';try{var d=new Date(t),s=Math.floor((Date.now()-d)/1000);if(s<10)return'刚刚';if(s<60)return s+'秒前';if(s<3600)return Math.floor(s/60)+'分钟前';if(s<86400)return Math.floor(s/3600)+'小时前';return Math.floor(s/86400)+'天前'}catch(e){return t}};
+var T=function(t){if(!t)return'--';try{return new Date(t).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch(e){return t}};
+var DT=function(t){if(!t)return'--';try{return new Date(t).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(e){return t}};
+
+// ── Engine Panel ─────────────────────────────────────────
+function renderEngine(d){
+  if(!d||d.status!='ok'){
+    document.getElementById('engine-dot').className='status-dot sdot-offline';
+    return'<div class=error-block><div class=err-title>无法连接 Data Engine</div><div class=err-detail>请确认公司电脑上的服务是否在运行（端口 8500）</div></div>';
+  }
+  document.getElementById('engine-dot').className='status-dot sdot-online';
+  var ap=d.auto_pull||{},ps=d.push_status||'';
+  var h='';
+  h+='<div class=section-label>📥 数据拉取</div>';
+  h+=R('状态',ap.running?'<span class=good>● 运行中</span>':'<span class=bad>● 已停止</span>');
+  h+=R('频率','每 '+(ap.interval_min||10)+' 分钟');
+  h+=R('最近拉取',T(ap.last_pull));
+  h+=R('距现在',A(ap.last_pull));
+  var lr=ap.last_result||'';
+  h+=R('结果','<span class="'+(lr.startsWith('OK')?'good':lr.startsWith('FAIL')?'bad':'warn')+'">'+lr+'</span>');
+  if(ap.next_pull)h+=R('下次拉取',T(ap.next_pull));
+  h+='<div class=divider></div>';
+  h+='<div class=section-label>📤 数据推送</div>';
+  h+=R('目标',(d.push_target||'未配置').substring(0,40));
+  h+=R('状态',ps=='OK'?'<span class=good>● 成功</span>':ps=='running'?'<span class=warn>● 进行中</span>':ps?'<span class=bad>● '+ps+'</span>':'<span class=warn>--</span>');
+  if(d.push_last)h+=R('推送时间',DT(d.push_last));
+  if(d.push_last)h+=R('距现在',A(d.push_last));
+  h+='<div class=divider></div>';
+  h+=R('数据缓存',d.data_cached?'<span class=good>有</span>':'<span class=warn>无</span>');
+  h+=R('缓存时间',d.data_time?DT(d.data_time):'--');
+  return h;
+}
+
+// ── Portal Panel ─────────────────────────────────────────
+function renderPortal(d){
+  if(!d||d.status!='ok'){
+    document.getElementById('portal-dot').className='status-dot sdot-offline';
+    return'<div class=error-block><div class=err-title>无法连接 Portal</div><div class=err-detail>请确认 Yumin Portal 服务是否在运行（端口 5050）</div></div>';
+  }
+  document.getElementById('portal-dot').className='status-dot sdot-online';
+  var diff=A(d.last_sync_time),fresh='good';
+  if(diff.includes('小时')||diff.includes('天'))fresh='bad';else if(diff.includes('10分钟'))fresh='warn';
+  var h='';
+  h+='<div class=section-label>🟢 服务</div>';
+  h+=R('版本',d.version||'--');
+  h+=R('运行时间',T(d.server_time));
+  h+='<div class=divider></div>';
+  h+='<div class=section-label>📦 数据</div>';
+  h+=R('数据库记录',F((d.db_records||{}).total||0)+' 条');
+  h+=R('最近同步',T(d.last_sync_time));
+  h+=R('数据新鲜度','<span class='+fresh+'>'+A(d.last_sync_time)+'</span>');
+  h+=R('同步序号','#'+(d.last_sync_id||0));
+  h+=R('K1 缓存',d.k1_cached?'<span class=good>✅ 就绪</span>':'<span class=warn>⚠️ 无缓存</span>');
+  return h;
+}
+
+function R(label,value){return'<div class=row><span class=label>'+label+'</span><span class=value>'+value+'</span></div>'}
+
+// ── Main ─────────────────────────────────────────────────
+async function refresh(){
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('zh-CN');
+
+  // Portal (local, always works if server is running)
+  try{
+    var pr=await fetch('http://localhost:5050/api/health'),pd=await pr.json();
+    document.getElementById('portal-body').innerHTML=renderPortal(pd);
+  }catch(e){document.getElementById('portal-body').innerHTML=renderPortal(null)}
+
+  // Engine (could be local or remote)
+  try{
+    var er=await fetch('http://localhost:8500/api/health'),ed=await er.json();
+    document.getElementById('engine-body').innerHTML=renderEngine(ed);
+  }catch(e){document.getElementById('engine-body').innerHTML=renderEngine(null)}
+}
+
+setInterval(refresh,30000);
+refresh();
+</script>
+</body>
+</html>
