@@ -6,14 +6,16 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-17T16:44:08.939Z
+  modified: 2026-08-17T17:05:49.171Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
 
 ## 备份
 
-`d:\workspace\850-scos-backup-20260818.zip` (2.3 MB) — 完整项目快照
+- `d:\workspace\850-scos-backup-20260818.zip` (2.3 MB) — 完整项目快照（含 data/ 数据库）
+- GitHub `kakawu0202-collab/daisy` main 分支 — 源码快照（commit `3de7ce2`，2026-08-18）+ `memory-backup/` 记忆全量备份
+- 同步方式：改动后运行 `git add 850-scos memory-backup; git commit; git push`（node_modules/data 已被 .gitignore 排除）
 
 ## 项目结构
 
