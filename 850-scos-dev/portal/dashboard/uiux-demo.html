@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOS · UI/UX Pro Max Demo</title>
+<style>
+/* Design System: Data-Dense Dashboard (dark adaptation)
+   Source: ui-ux-pro-max — Analytics Dashboard palette inverted for dark mode
+   Typography: Fira Sans + Fira Code (dashboard/data/technical) */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+:root{
+  --color-primary:#3B82F6;      /* blue 500 — primary actions */
+  --color-on-primary:#FFFFFF;
+  --color-secondary:#60A5FA;    /* blue 400 */
+  --color-accent:#F59E0B;       /* amber 500 — highlights */
+  --color-bg:#0B1220;           /* dark navy */
+  --color-surface:#111A2E;      /* card */
+  --color-surface2:#18233B;     /* elevated card */
+  --color-foreground:#E2E8F0;   /* slate 200 */
+  --color-muted:#64748B;        /* slate 500 */
+  --color-border:#1E293B;       /* slate 800 */
+  --color-border-active:rgba(59,130,246,.35);
+  --color-good:#22C55E;
+  --color-warn:#F59E0B;
+  --color-bad:#EF4444;
+  --radius:10px;
+  --space-1:8px;--space-2:16px;--space-3:24px;--space-4:32px;
+  --font-body:'Fira Sans',system-ui,sans-serif;
+  --font-mono:'Fira Code',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-foreground);padding:var(--space-3);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* Header */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)}
+.top h1{font-size:18px;font-weight:600;letter-spacing:-.2px}
+.top .meta{font-family:var(--font-mono);font-size:11px;color:var(--color-muted)}
+
+/* KPI Row — dense grid */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-1);margin-bottom:var(--space-2)}
+.kpi{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:var(--space-2);transition:border-color 200ms,transform 150ms}
+.kpi:hover{border-color:var(--color-border-active);transform:translateY(-1px)}
+.kpi .lbl{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--color-muted);margin-bottom:6px}
+.kpi .val{font-family:var(--font-mono);font-size:26px;font-weight:600;letter-spacing:-.5px}
+.kpi .sub{font-size:10px;color:var(--color-muted);margin-top:4px}
+.kpi.blue .val{color:var(--color-primary)}.kpi.amber .val{color:var(--color-warn)}
+.kpi.green .val{color:var(--color-good)}.kpi.red .val{color:var(--color-bad)}
+
+/* Section */
+.sec{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:var(--space-2);margin-bottom:var(--space-2)}
+.sec h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--color-muted);margin-bottom:var(--space-2);display:flex;justify-content:space-between;align-items:center}
+
+/* Data table — dense */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--color-muted);border-bottom:2px solid var(--color-border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--color-border);white-space:nowrap;font-family:var(--font-mono);font-size:11px}
+tr:hover td{background:var(--color-surface2)}
+.n{text-align:right}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.pill.green{background:rgba(34,197,94,.12);color:var(--color-good)}
+.pill.red{background:rgba(239,68,68,.12);color:var(--color-bad)}
+.pill.amber{background:rgba(245,158,11,.12);color:var(--color-warn)}
+
+/* Progress bar */
+.pbar{height:6px;background:var(--color-surface2);border-radius:3px;overflow:hidden;margin-top:8px}
+.pbar .fill{height:100%;border-radius:3px;transition:width 300ms ease}
+
+/* Grid 2-col */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-1);margin-bottom:var(--space-2)}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+/* Buttons — 44px touch target */
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface2);color:var(--color-foreground);font-size:12px;font-weight:500;cursor:pointer;transition:border-color 200ms}
+.btn:hover{border-color:var(--color-border-active)}
+.btn.primary{background:var(--color-primary);border-color:var(--color-primary);color:var(--color-on-primary)}
+
+/* Focus ring — accessibility */
+:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>850 SCOS</h1>
+  <span class="meta">UI/UX Pro Max · Data-Dense Dashboard · Fira Sans/Code</span>
+</div>
+
+<!-- KPI Row -->
+<div class="kpi-row">
+  <div class="kpi blue"><div class="lbl">PRD Total</div><div class="val">139,953</div><div class="sub">6,702 POs</div></div>
+  <div class="kpi amber"><div class="lbl">Backlog</div><div class="val">19,498</div><div class="sub">ASN Pending: 2,880</div></div>
+  <div class="kpi green"><div class="lbl">Shipped</div><div class="val">120,452</div><div class="sub">86% rate</div></div>
+  <div class="kpi red"><div class="lbl">CTO P1 Unshipped</div><div class="val">24</div><div class="sub">24 pcs at risk</div></div>
+</div>
+
+<!-- Production Status -->
+<div class="sec">
+  <h3>Production Status <span class="meta" style="font-size:10px">STBL → ATB → WIP → FG</span></h3>
+  <table>
+    <thead><tr><th>Type</th><th class="n">STBL</th><th class="n">ATB</th><th class="n">WIP</th><th class="n">FG</th><th class="n">Total</th></tr></thead>
+    <tbody>
+      <tr><td style="font-family:var(--font-body)">CTO P1</td><td class="n">0</td><td class="n">5</td><td class="n">18</td><td class="n">1</td><td class="n"><b>24</b></td></tr>
+      <tr><td style="font-family:var(--font-body)">FGA</td><td class="n">2,925</td><td class="n">4,330</td><td class="n">4,623</td><td class="n">7,594</td><td class="n"><b>19,472</b></td></tr>
+      <tr><td style="font-family:var(--font-body)">RTL</td><td class="n">0</td><td class="n">0</td><td class="n">4,856</td><td class="n">1,338</td><td class="n"><b>6,194</b></td></tr>
+      <tr><td style="font-family:var(--font-body)">CTO P2</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n"><b>0</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- KPI Table with pills -->
+<div class="grid2">
+  <div class="sec">
+    <h3>E2E KPI Summary</h3>
+    <table>
+      <thead><tr><th>KPI</th><th class="n">SLA</th><th class="n">Rate</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:var(--font-body)">Planning</td><td class="n">11H</td><td class="n">82%</td><td><span class="pill green">PASS</span></td></tr>
+        <tr><td style="font-family:var(--font-body)">Kitting</td><td class="n">3H</td><td class="n">91%</td><td><span class="pill green">PASS</span></td></tr>
+        <tr><td style="font-family:var(--font-body)">Build</td><td class="n">12H</td><td class="n">74%</td><td><span class="pill red">FAIL</span></td></tr>
+        <tr><td style="font-family:var(--font-body)">Shipment</td><td class="n">1H</td><td class="n">88%</td><td><span class="pill green">PASS</span></td></tr>
+        <tr><td style="font-family:var(--font-body)">Shuttle</td><td class="n">5H</td><td class="n">69%</td><td><span class="pill amber">WARN</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sec">
+    <h3>CTO P1 28H Progress</h3>
+    <div class="kpi blue" style="border:none;padding:4px 0">
+      <div class="lbl">This Week</div>
+      <div class="val">98.1%</div>
+    </div>
+    <div class="pbar"><div class="fill" style="width:98%;background:var(--color-good)"></div></div>
+    <div style="font-size:11px;color:var(--color-muted);margin-top:6px">52 / 53 POs · Goal ≥75%</div>
+    <div style="margin-top:16px" class="kpi amber" >
+      <div class="lbl">Today Miss Risk</div>
+      <div class="val">19</div>
+      <div class="sub">pcs due today</div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div style="display:flex;gap:8px">
+  <button class="btn primary" onclick="alert('Refresh')">↻ Refresh Data</button>
+  <button class="btn" onclick="alert('Export')">⤓ Export CSV</button>
+  <button class="btn" onclick="location.href='/index.html'">Back to Live</button>
+</div>
+
+</body>
+</html>

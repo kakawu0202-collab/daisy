@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Query Builder · 850 SCOS</title>
+<style>
+:root{--bg:#0B1220;--card:#111A2E;--card2:#18233B;--border:#1E293B;--fg:#E2E8F0;--muted:#64748B;--accent:#3B82F6;--g:#22C55E;--r:#EF4444;--ra:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);padding:20px;font-size:13px;line-height:1.5;min-height:100vh}
+h1{font-size:18px;margin-bottom:4px}.sub{font-size:11px;color:var(--muted);margin-bottom:20px}
+.bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.bar a,.bar button{background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 14px;text-decoration:none;font-size:11px;cursor:pointer}
+.bar button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Question builder — sentence style */
+.qbuilder{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:20px;margin-bottom:16px}
+.qbuilder .qline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:12px}
+.qbuilder select,.qbuilder input{background:var(--card2);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px}
+.qbuilder .qtext{color:var(--muted)}
+
+/* Conditions */
+.cond{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.cond select,.cond input{background:var(--card2);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px}
+.cond .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px}
+.cond .del:hover{color:var(--r)}
+.add-cond{background:transparent;border:1px dashed var(--border);color:var(--accent);border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer}
+.add-cond:hover{border-color:var(--accent)}
+
+/* Result */
+.result{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:20px;margin-bottom:16px}
+.result .big{display:flex;align-items:baseline;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.result .big .num{font-size:42px;font-weight:800;letter-spacing:-1px}
+.result .big .lbl{font-size:12px;color:var(--muted)}
+.result .big .sub{font-size:11px;color:var(--muted);margin:0}
+.table-wrap{max-height:400px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+th{text-align:left;padding:7px 10px;background:var(--card2);color:var(--muted);font-size:9px;font-weight:600;text-transform:uppercase;position:sticky;top:0;z-index:1}
+td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.03)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.n{text-align:right}
+
+/* Group by result */
+.groups{margin-bottom:16px}
+.group-row{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.group-row .bar-mini{flex:1;margin:0 14px;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;align-self:center}
+.group-row .bar-mini .f{height:100%;background:var(--accent);border-radius:3px}
+
+/* Presets */
+.presets{margin-bottom:12px}
+.preset-btn{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;color:var(--muted);margin-right:6px}
+.preset-btn:hover{border-color:var(--accent);color:var(--fg)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;display:none;z-index:100}
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="/index.html">Home</a>
+  <button class="primary" onclick="runQuery()">▶ Run</button>
+  <button onclick="exportCSV()">⤓ CSV</button>
+  <button onclick="savePreset()">💾 Save</button>
+</div>
+
+<h1>Query Builder</h1>
+<div class="sub">Ask a question · Get the answer</div>
+
+<div class="presets" id="presets"></div>
+
+<div class="qbuilder">
+  <div class="qline">
+    <span class="qtext">Show</span>
+    <select id="q-mode" onchange="modeChange()">
+      <option value="count">Count (total)</option>
+      <option value="sum">Sum of</option>
+      <option value="list">Detail list</option>
+      <option value="group">Group by</option>
+    </select>
+    <select id="q-sum-field" style="display:none">
+      <option value="PO_QTY">PO Qty</option>
+      <option value="REMAIN_QTY">Remain Qty</option>
+      <option value="SHIPPED_QTY">Shipped Qty</option>
+    </select>
+    <select id="q-group-field" style="display:none">
+      <option value="REGION">Region</option>
+      <option value="SUB_TYPE">Type</option>
+      <option value="SHIP_MODE">Ship Mode</option>
+      <option value="SCAC">Forwarder</option>
+      <option value="MCID">MCID</option>
+      <option value="PRIORITY">Priority</option>
+      <option value="STATUS">Status</option>
+      <option value="ACK_STATUS">Ack Status</option>
+    </select>
+    <span class="qtext">of orders where</span>
+  </div>
+  <div id="conditions"></div>
+  <button class="add-cond" onclick="addCond()">+ Add condition</button>
+</div>
+
+<div class="result" id="result">
+  <div class="sub">Click ▶ Run to get the answer</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+var records=[],currentCols=[]
+var FIELDS={
+  REGION:{l:'Region',t:'sel',opts:['DAO','APJ','EMEA']},
+  SUB_TYPE:{l:'Type',t:'sel',opts:['CTO','FGA','RTL']},
+  SHIP_MODE:{l:'Mode',t:'sel',opts:['A','S','G','SA','PA']},
+  SCAC:{l:'Forwarder',t:'sel',opts:[]},
+  PRIORITY:{l:'Priority',t:'sel',opts:['1','2','3','4']},
+  STATUS:{l:'Status',t:'sel',opts:['OPEN','CLOSE','ZC']},
+  ACK_STATUS:{l:'Ack',t:'sel',opts:['ACCEPT','REJECT']},
+  IS_HOLD:{l:'Hold',t:'sel',opts:['Y','N']},
+  PO_RECEIVE_DATE:{l:'Received',t:'date'},
+  MSBD:{l:'MSBD',t:'date'},
+  SN_CDT:{l:'SN Date',t:'date'},
+  MCID:{l:'MCID',t:'text'},
+  PO:{l:'PO',t:'text'},
+  DPN:{l:'DPN',t:'text'},
+  CTO_P1:{l:'CTO P1 Only',t:'sel',opts:['Y']}
+}
+var OPS={sel:'=',date:'on',text:'contains'}
+
+async function loadScac(){
+  try{
+    var d=await(await fetch('/api/orders?limit=5000')).json()
+    var s={}
+    ;(d.records||[]).forEach(function(r){if(r.SCAC)s[r.SCAC]=true})
+    FIELDS.SCAC.opts=Object.keys(s).sort()
+  }catch(e){}
+}
+
+function addCond(preset){
+  var c=document.createElement('div')
+  c.className='cond'
+  c.innerHTML='<span class="qtext">AND</span>'+
+    '<select class="c-field" onchange="fieldChange(this)">'+Object.keys(FIELDS).map(function(f){return'<option value="'+f+'">'+FIELDS[f].l+'</option>'}).join('')+'</select>'+
+    '<select class="c-op"><option>=</option><option>≠</option></select>'+
+    '<span class="c-val-wrap"></span>'+
+    '<button class="del" onclick="this.parentElement.remove()">✕</button>'
+  document.getElementById('conditions').appendChild(c)
+  if(preset){c.querySelector('.c-field').value=preset.f}
+  fieldChange(c.querySelector('.c-field'),preset?preset.v:null)
+}
+
+function fieldChange(sel,val){
+  var f=FIELDS[sel.value]
+  var wrap=sel.parentElement.querySelector('.c-val-wrap')
+  if(f.t==='sel'){
+    wrap.innerHTML='<select class="c-val">'+f.opts.map(function(o){return'<option value="'+o+'">'+o+'</option>'}).join('')+'</select>'
+  }else if(f.t==='date'){
+    wrap.innerHTML='<input type="date" class="c-val">'
+  }else{
+    wrap.innerHTML='<input type="text" class="c-val" placeholder="'+f.l+'">'
+  }
+  if(val!==null&&val!==undefined)wrap.querySelector('.c-val').value=val
+}
+
+function modeChange(){
+  var m=document.getElementById('q-mode').value
+  document.getElementById('q-sum-field').style.display=m==='sum'?'':'none'
+  document.getElementById('q-group-field').style.display=m==='group'?'':'none'
+}
+
+function collect(){
+  var conds=[]
+  document.querySelectorAll('.cond').forEach(function(c){
+    var f=c.querySelector('.c-field').value
+    var op=c.querySelector('.c-op').value
+    var v=c.querySelector('.c-val').value.trim()
+    if(v)conds.push({f:f,op:op,v:v})
+  })
+  return conds
+}
+
+async function runQuery(){
+  var conds=collect()
+  var q=[]
+  var mode=document.getElementById('q-mode').value
+  conds.forEach(function(c){
+    var api=null
+    if(c.f==='CTO_P1')api='cto_p1='+c.v
+    else if(c.f==='PO_RECEIVE_DATE')api='po_received='+c.v
+    else if(c.f==='SN_CDT')api='sn='+c.v
+    else if(c.f==='IS_HOLD')api='is_hold='+c.v
+    else api=c.f.toLowerCase()+'='+encodeURIComponent(c.v)
+    q.push(api)
+  })
+  var d=await(await fetch('/api/orders?'+q.join('&')+'&limit=5000')).json()
+  records=d.records||[]
+  var r=document.getElementById('result')
+
+  if(mode==='count'){
+    r.innerHTML='<div class="big"><div class="num">'+F(records.length)+'</div><div class="lbl">orders match</div></div>'
+    renderTable(r,['PO','DPN','IPN','PO_QTY','REGION','SUB_TYPE','SHIP_MODE','MSBD','STATUS'])
+  }else if(mode==='sum'){
+    var sf=document.getElementById('q-sum-field').value
+    var total=records.reduce(function(a,x){return a+(parseInt(x[sf])||0)},0)
+    r.innerHTML='<div class="big"><div class="num">'+F(total)+'</div><div class="lbl">'+sf+' total · '+F(records.length)+' orders</div></div>'
+    renderTable(r,['PO','DPN','IPN','PO_QTY','REGION','SUB_TYPE','MSBD'])
+  }else if(mode==='group'){
+    var gf=document.getElementById('q-group-field').value
+    var groups={}
+    records.forEach(function(x){var k=x[gf]||'(blank)';groups[k]=(groups[k]||0)+1})
+    var max=Math.max.apply(null,Object.values(groups))||1
+    var h='<div class="big"><div class="num">'+F(records.length)+'</div><div class="lbl">orders · grouped by '+gf+'</div></div><div class="groups">'
+    Object.keys(groups).sort(function(a,b){return groups[b]-groups[a]}).forEach(function(k){
+      h+='<div class="group-row"><span>'+k+'</span><div class="bar-mini"><div class="f" style="width:'+Math.round(groups[k]/max*100)+'%"></div></div><span class="n"><b>'+F(groups[k])+'</b> orders</span></div>'
+    })
+    h+='</div>'
+    r.innerHTML=h
+    renderTable(r,['PO','DPN','IPN','PO_QTY','REGION','SUB_TYPE','MSBD'])
+  }else{ // list
+    r.innerHTML='<div class="big"><div class="num">'+F(records.length)+'</div><div class="lbl">orders</div></div>'
+    renderTable(r,['PO','PO_LINE','DPN','IPN','PO_QTY','REMAIN_QTY','SHIP_QTY','MSBD','PSD','SN_CDT','PO_RECEIVE_DATE','REGION','SUB_TYPE','CTO_P1','PRIORITY','SHIP_MODE','SCAC','MCID','SHIP_TO_COUNTRY','STATUS','ACK_STATUS','STATUS_LABEL','IS_HOLD','HOLD_CODE','ASN','HAWB','STBL','ATB','WIP','FG','SN','INPUT_CDT','STOCKIN_CDT','CREATEASN_CDT','ACTUAL_SHIPPED','ASN_PENDING'])
+  }
+}
+
+function renderTable(r,cols){
+  currentCols=cols
+  var wrap=document.createElement('div')
+  wrap.className='table-wrap'
+  wrap.innerHTML='<table><thead><tr>'+cols.map(function(c){return'<th>'+c+'</th>'}).join('')+'</tr></thead><tbody>'+
+    records.slice(0,200).map(function(x){return'<tr>'+cols.map(function(c){var v=x[c];return'<td'+(isNaN(v)?'':' class=n')+'>'+(v===null||v===undefined?'':v)+'</td>'}).join('')+'</tr>'}).join('')+
+    (records.length>200?'<tr><td colspan="'+cols.length+'" style="color:var(--muted);text-align:center;padding:8px">Showing 200 of '+F(records.length)+' — export CSV for full list</td></tr>':'')+
+    '</tbody></table>'
+  r.appendChild(wrap)
+}
+
+function exportCSV(){
+  if(!records.length){toast('Run query first');return}
+  var csv='﻿'+currentCols.join(',')+'\n'
+  records.forEach(function(x){csv+=currentCols.map(function(c){var v=x[c];return String(v===null||v===undefined?'':v).indexOf(',')>=0?'"'+v+'"':v}).join(',')+'\n'})
+  var b=new Blob([csv],{type:'text/csv;charset=utf-8'})
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='scos_query.csv';a.click()
+}
+
+function savePreset(){
+  var name=prompt('Query name?')
+  if(!name)return
+  var p=JSON.parse(localStorage.getItem('scos-query-presets')||'{}')
+  p[name]={mode:document.getElementById('q-mode').value,sum:document.getElementById('q-sum-field').value,group:document.getElementById('q-group-field').value,conds:collect()}
+  localStorage.setItem('scos-query-presets',JSON.stringify(p))
+  renderPresets()
+  toast('Saved: '+name)
+}
+function renderPresets(){
+  var p=JSON.parse(localStorage.getItem('scos-query-presets')||'{}')
+  var names=Object.keys(p)
+  document.getElementById('presets').innerHTML=names.map(function(n){
+    var summary=(p[n].conds||[]).map(function(c){return FIELDS[c.f].l+':'+c.v}).join(', ')
+    return'<button class="preset-btn" onclick="loadPreset(\''+n.replace(/'/g,'')+'\')" title="'+summary+'">⭐ '+n+'</button>'
+  }).join('')
+}
+function loadPreset(name){
+  var p=JSON.parse(localStorage.getItem('scos-query-presets')||'{}')[name]
+  if(!p)return
+  document.getElementById('q-mode').value=p.mode||'count'
+  document.getElementById('q-sum-field').value=p.sum||'PO_QTY'
+  document.getElementById('q-group-field').value=p.group||'REGION'
+  modeChange()
+  document.getElementById('conditions').innerHTML=''
+  ;(p.conds||[]).forEach(function(c){addCond(c)})
+  runQuery()
+  toast('Loaded: '+name)
+}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2000)}
+
+renderPresets();loadScac()
+</script>
+</body>
+</html>

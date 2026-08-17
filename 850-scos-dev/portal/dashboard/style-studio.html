@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOS · Style Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+/* ── Base tokens (overridden by theme) ── */
+:root{
+  --bg:#0B1220;--surface:#111A2E;--surface2:#18233B;--fg:#E2E8F0;--muted:#64748B;--border:#1E293B;
+  --accent:#3B82F6;--good:#22C55E;--warn:#F59E0B;--bad:#EF4444;
+  --radius:10px;--gap:8px;--font:'Inter',system-ui,sans-serif;
+  --shadow:none;--blur:0px;
+}
+
+/* ── Themes ── */
+[data-theme="dense"]{--bg:#0B1220;--surface:#111A2E;--surface2:#18233B;--fg:#E2E8F0;--muted:#64748B;--border:#1E293B;--accent:#3B82F6;--radius:10px;--font:'Inter',sans-serif;--blur:0px;--shadow:none}
+[data-theme="cinema"]{--bg:linear-gradient(180deg,#0a0a0f,#020203);--surface:rgba(255,255,255,.05);--surface2:rgba(255,255,255,.08);--fg:#EDEDEF;--muted:#8A8F98;--border:rgba(255,255,255,.08);--accent:#5E6AD2;--radius:16px;--font:'Inter',sans-serif;--blur:20px;--shadow:0 0 30px rgba(94,106,210,.2)}
+[data-theme="glass"]{--bg:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);--surface:rgba(255,255,255,.08);--surface2:rgba(255,255,255,.12);--fg:#fff;--muted:rgba(255,255,255,.65);--border:rgba(255,255,255,.18);--accent:#a78bfa;--radius:16px;--font:'Inter',sans-serif;--blur:20px;--shadow:0 8px 32px rgba(0,0,0,.2)}
+[data-theme="brutal"]{--bg:#F5F2EA;--surface:#fff;--surface2:#fff;--fg:#111;--muted:#555;--border:#111;--accent:#111;--good:#0a0;--warn:#e11;--bad:#e11;--radius:0px;--font:'Space Grotesk',sans-serif;--blur:0px;--shadow:5px 5px 0 #111}
+[data-theme="spatial"]{--bg:linear-gradient(160deg,#1a1b2e,#0d0f1f 40%,#2a1a3a);--surface:rgba(255,255,255,.12);--surface2:rgba(255,255,255,.15);--fg:#fff;--muted:rgba(255,255,255,.6);--border:rgba(255,255,255,.2);--accent:#7c6cf0;--radius:24px;--font:'Inter',sans-serif;--blur:40px;--shadow:0 8px 32px rgba(0,0,0,.35)}
+
+/* NEW: OLED */
+[data-theme="oled"]{--bg:#000000;--surface:#121212;--surface2:#1a1a1a;--fg:#FFFFFF;--muted:#8a8a8a;--border:#2a2a2a;--accent:#0A0E27;--good:#00E676;--warn:#FFD54F;--bad:#FF5252;--radius:8px;--font:'Inter',sans-serif;--blur:0px;--shadow:0 0 10px rgba(0,230,118,.08)}
+
+/* NEW: Cyberpunk */
+[data-theme="cyberpunk"]{--bg:#0a0a12;--surface:#131322;--surface2:#1a1a2e;--fg:#00FFFF;--muted:#8892b0;--border:#0080FF;--accent:#FF006E;--good:#00FFFF;--warn:#FFD700;--bad:#FF006E;--radius:4px;--font:'Courier New',monospace;--blur:0px;--shadow:0 0 10px #0080FF,0 0 20px rgba(0,128,255,.3)}
+
+/* NEW: Soft UI (Neumorphism evolution) */
+[data-theme="softui"]{--bg:#E8EDF2;--surface:#E8EDF2;--surface2:#E0E5EB;--fg:#2d3748;--muted:#718096;--border:#D1D9E0;--accent:#87CEEB;--good:#4CAF50;--warn:#F59E0B;--bad:#E53E3E;--radius:14px;--font:'Inter',sans-serif;--blur:0px;--shadow:8px 8px 16px rgba(163,177,198,.6),-8px -8px 16px rgba(255,255,255,.9)}
+
+/* NEW: Bento Grid */
+[data-theme="bento"]{--bg:#F5F5F7;--surface:#FFFFFF;--surface2:#FAFAFC;--fg:#1D1D1F;--muted:#86868B;--border:#E8E8ED;--accent:#0071E3;--good:#34C759;--warn:#FF9500;--bad:#FF3B30;--radius:20px;--font:'Inter',sans-serif;--blur:0px;--shadow:0 2px 8px rgba(0,0,0,.06)}
+
+/* NEW: Memphis */
+[data-theme="memphis"]{--bg:#FFF8F0;--surface:#FFFFFF;--surface2:#FFFDF7;--fg:#2D2D2D;--muted:#8a8a8a;--border:#FF71CE;--accent:#FF71CE;--good:#86CCCA;--warn:#FFCE5C;--bad:#FF5C8A;--radius:12px;--font:'Comic Sans MS','Chalkboard SE',sans-serif;--blur:0px;--shadow:4px 4px 0 rgba(255,113,206,.4)}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);background-attachment:fixed;color:var(--fg);min-height:100vh;padding:20px;font-size:14px;line-height:1.5;transition:background .4s}
+h1{font-size:19px;font-weight:700}
+.sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;position:sticky;top:0;z-index:50;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);padding:10px;border-radius:12px}
+.toolbar select,.toolbar input[type=color],.toolbar input[type=range]{font-size:11px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);font-family:var(--font)}
+.toolbar input[type=color]{padding:0;width:36px;height:32px;cursor:pointer;border:none}
+.toolbar label{font-size:10px;color:var(--muted)}
+
+/* Cards */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--gap);margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);transition:transform .2s}
+.kpi:hover{transform:scale(1.02)}
+.kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.kpi .v{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.kpi .s{font-size:10px;color:var(--muted);margin-top:4px}
+
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));box-shadow:var(--shadow)}
+.sec h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.n{text-align:right}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <label>Theme:</label>
+  <select id="theme" onchange="setTheme(this.value)">
+    <option value="dense">Data-Dense</option>
+    <option value="cinema">Cinema Dark</option>
+    <option value="glass">Glassmorphism</option>
+    <option value="brutal">Neo-Brutalism</option>
+    <option value="spatial">Spatial (VisionOS)</option>
+    <option value="oled">OLED Night</option>
+    <option value="cyberpunk">Cyberpunk Neon</option>
+    <option value="softui">Soft UI</option>
+    <option value="bento">Bento Grid</option>
+    <option value="memphis">Memphis 80s</option>
+  </select>
+
+  <label style="margin-left:8px">Accent:</label>
+  <input type="color" id="accent" value="#3B82F6" oninput="custom('--accent',this.value)">
+
+  <label style="margin-left:8px">Radius:</label>
+  <input type="range" id="radius" min="0" max="24" value="10" oninput="custom('--radius',this.value+'px')">
+
+  <label style="margin-left:8px">Gap:</label>
+  <input type="range" id="gap" min="4" max="24" value="8" oninput="custom('--gap',this.value+'px')">
+
+  <button onclick="resetCustom()" style="font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);cursor:pointer">Reset</button>
+  <span style="font-size:10px;color:var(--muted)">← 拖这些滑条试试</span>
+</div>
+
+<h1>850 SCOS · Style Studio</h1>
+<div class="sub">选择主题即时切换 · 滑条自定义圆角/间距 · 取色器自定义强调色</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="l">PRD Total</div><div class="v">139,953</div><div class="s">6,702 POs</div></div>
+  <div class="kpi"><div class="l">Backlog</div><div class="v" style="color:var(--warn)">19,498</div><div class="s">ASN 2,880</div></div>
+  <div class="kpi"><div class="l">Shipped</div><div class="v" style="color:var(--good)">120,452</div><div class="s">86%</div></div>
+  <div class="kpi"><div class="l">CTO P1</div><div class="v" style="color:var(--bad)">24</div><div class="s">28H risk</div></div>
+</div>
+
+<div class="sec">
+  <h3>E2E KPI</h3>
+  <table>
+    <thead><tr><th>KPI</th><th class="n">SLA</th><th class="n">Rate</th></tr></thead>
+    <tbody>
+      <tr><td>Planning</td><td class="n">11H</td><td class="n">82%</td></tr>
+      <tr><td>Kitting</td><td class="n">3H</td><td class="n">91%</td></tr>
+      <tr><td>Build</td><td class="n">12H</td><td class="n">74%</td></tr>
+      <tr><td>Shipment</td><td class="n">1H</td><td class="n">88%</td></tr>
+      <tr><td>Shuttle</td><td class="n">5H</td><td class="n">69%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t)
+  localStorage.setItem('scos-theme',t)
+}
+function custom(v,val){
+  document.documentElement.style.setProperty(v,val)
+}
+function resetCustom(){
+  document.documentElement.removeAttribute('style')
+  var r=document.getElementById('radius');r.value=10
+  var g=document.getElementById('gap');g.value=8
+}
+// Restore saved
+var saved=localStorage.getItem('scos-theme')
+if(saved){document.getElementById('theme').value=saved;setTheme(saved)}
+</script>
+</body>
+</html>

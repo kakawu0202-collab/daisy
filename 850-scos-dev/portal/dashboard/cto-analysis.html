@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTO P1 · E2E Analysis</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--b2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#3b82f6;--g:#22c55e;--r:#ef4444;--a:#f59e0b;--rd:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);padding:20px;min-height:100vh}
+h1{font-size:18px;margin-bottom:4px}.sub{font-size:11px;color:var(--muted);margin-bottom:18px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:640px){.summary{grid-template-columns:repeat(2,1fr)}}
+.skpi{background:var(--card);border:1px solid var(--b2);border-radius:var(--rd);padding:14px;text-align:center}
+.skpi .lbl{font-size:9px;color:var(--muted);text-transform:uppercase}.skpi .val{font-size:28px;font-weight:800;margin:4px 0}.skpi .det{font-size:9px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--b2);border-radius:var(--rd);padding:16px;margin-bottom:12px}
+.card h3{font-size:12px;color:var(--muted);margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px;background:rgba(59,130,246,.08);color:var(--accent);font-size:9px;position:sticky;top:0}
+td{padding:6px;border-bottom:1px solid rgba(255,255,255,.03)}
+.n{text-align:right}.ok{color:var(--g)}.fail{color:var(--r)}.warn{color:var(--a)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.h-bar{height:6px;background:var(--b2);border-radius:3px;margin-top:4px;overflow:hidden}
+.h-bar .fill{height:100%;border-radius:3px}
+.chart-wrap{position:relative;height:220px}
+.btns{margin-bottom:12px}.btns button,.btns a{color:#fff;background:var(--accent);border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:11px;text-decoration:none;margin-right:6px}
+input,select{padding:6px 10px;background:var(--card);color:var(--text);border:1px solid var(--b2);border-radius:4px;font-size:11px}
+.loading{padding:20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="btns"><a href="/index.html">← Home</a><a href="/k1.html">K1 Dashboard</a><button onclick="load()">🔄 Refresh</button></div>
+<h1>CTO P1 · E2E Station Analysis</h1>
+<div class="sub">Pass Rate by Station · Bottleneck</div>
+
+<div class="summary" id="summary"></div>
+
+<div class="row2">
+  <div class="card"><h3>Pass Rate by Station</h3><div class="chart-wrap"><canvas id="c-rate"></canvas></div></div>
+  <div class="card"><h3>Overtime Distribution</h3><div id="bottleneck"></div></div>
+</div>
+
+<div class="card">
+  <h3>Order Details <span style="font-weight:400;font-size:10px;color:var(--muted)">(click station name to filter)</span></h3>
+  <input type="text" id="filter-po" placeholder="Search PO..." oninput="filterTable()" style="width:180px;margin-right:8px">
+  <select id="filter-station" onchange="filterTable()">
+    <option value="">All Stations</option><option value="planning">Planning Overtime</option><option value="build">Build Overtime</option><option value="shuttle">Shuttle Overtime</option><option value="asn">ASN Overtime</option>
+  </select>
+  <span style="font-size:10px;color:var(--muted);margin-left:8px" id="filter-count"></span>
+  <div style="max-height:500px;overflow:auto;margin-top:8px"><table id="detail-table"><thead><tr><th>PO</th><th>QTY</th><th>Planning 11H</th><th>Build 12H</th><th>Shuttle 5H</th><th>ASN 1H</th><th>Total(H)</th><th>Status</th></tr></thead><tbody id="detail-body"></tbody></table></div>
+</div>
+
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+var allData=[]
+
+async function load(){
+  document.getElementById('summary').innerHTML='<div class=loading>Loading...</div>'
+  // Get all CTO P1 records
+  var r=await fetch('/api/orders?cto_p1=Y')
+  var data=await r.json()
+  allData=(data.records||[]).filter(function(r){return r.po_received&&r.sn_cdt})
+  render()
+}
+
+function parseDT(s){
+  if(!s)return null
+  try{return new Date(s.replace('Z',''))}catch(e){return null}
+}
+
+function hours(a,b){
+  if(!a||!b)return null
+  return Math.round((b-a)/3600000*10)/10
+}
+
+function render(){
+  var recs=[]
+  for(var i=0;i<allData.length;i++){
+    var r=allData[i],prd=parseDT(r.po_received),inp=parseDT(r.input_cdt),stk=parseDT(r.stockin_cdt),sn=parseDT(r.sn_cdt),asn=parseDT(r.createasn_cdt)
+    var planning=hours(prd,inp),build=hours(inp,stk),shuttle=hours(stk,sn),ss_asn=hours(stk,asn),total=hours(prd,sn)
+    recs.push({po:r.po,qty:r.po_qty,planning:planning,build:build,shuttle:shuttle,ss_asn:ss_asn,total:total,
+      p_ok:planning!=null&&planning<=11,b_ok:build!=null&&build<=12,s_ok:shuttle!=null&&shuttle<=5,a_ok:ss_asn!=null&&ss_asn<=1,
+      p_val:planning,b_val:build,s_val:shuttle,a_val:ss_asn,all_ok:total!=null&&total<=28})
+  }
+  allData=recs
+
+  // Summary
+  var clean=recs.filter(function(r){return r.total!=null})
+  var ok28=clean.filter(function(r){return r.all_ok}).length
+  var pOk=clean.filter(function(r){return r.p_ok}).length,bOk=clean.filter(function(r){return r.b_ok}).length
+  var sOk=clean.filter(function(r){return r.s_ok}).length,aOk=clean.filter(function(r){return r.a_ok}).length
+  var c=clean.length||1
+
+  document.getElementById('summary').innerHTML=
+    '<div class=skpi><div class=lbl>Clean 28H</div><div class="val" style=color:'+(ok28/c>=0.9?'var(--g)':ok28/c>=0.75?'var(--a)':'var(--r)')+'>'+Math.round(ok28/c*100)+'%</div><div class=det>'+ok28+'/'+c+' OK</div></div>'+
+    '<div class=skpi><div class=lbl>Planning 11H</div><div class="val" style=color:'+(pOk/c>=0.75?'var(--g)':'var(--a)')+'>'+Math.round(pOk/c*100)+'%</div><div class=det>'+pOk+'/'+c+' OK</div></div>'+
+    '<div class=skpi><div class=lbl>Build 12H</div><div class="val" style=color:'+(bOk/c>=0.75?'var(--g)':'var(--a)')+'>'+Math.round(bOk/c*100)+'%</div><div class=det>'+bOk+'/'+c+' OK</div></div>'+
+    '<div class=skpi><div class=lbl>Shuttle 5H</div><div class="val" style=color:'+(sOk/c>=0.85?'var(--g)':'var(--a)')+'>'+Math.round(sOk/c*100)+'%</div><div class=det>'+sOk+'/'+c+' OK</div></div>'
+
+  // Chart
+  setTimeout(function(){
+    var ctx=document.getElementById('c-rate');if(!ctx)return
+    var c=Chart.getChart('c-rate');if(c)c.destroy()
+    new Chart(ctx,{type:'bar',data:{labels:['Planning','Build','Shuttle','ASN'],datasets:[
+      {label:'PASS',data:[pOk,bOk,sOk,aOk],backgroundColor:'var(--g)',borderRadius:2},
+      {label:'Overtime',data:[clean.length-pOk,clean.length-bOk,clean.length-sOk,clean.length-aOk],backgroundColor:'var(--r)',borderRadius:2}
+    ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{color:'#94a3b8',font:{size:9}}},y:{stacked:true,ticks:{color:'#94a3b8',font:{size:9}}}},plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9},padding:4,boxWidth:10}}}}})
+  },300)
+
+  // Bottleneck analysis
+  var stations=[{n:'Planning 11H',fail:clean.length-pOk,total:c},{n:'Build 12H',fail:clean.length-bOk,total:c},{n:'Shuttle 5H',fail:clean.length-sOk,total:c},{n:'ASN 1H',fail:clean.length-aOk,total:c}]
+  stations.sort(function(a,b){return b.fail-a.fail})
+  document.getElementById('bottleneck').innerHTML='<div style="font-size:10px;color:var(--muted);margin-bottom:8px">Overtime最多的站别（优先改善）</div>'+stations.map(function(s,i){
+    return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px"><span>'+(i+1)+'. '+s.n+'</span><span class='+(s.fail>0?'fail':'ok')+'>'+s.fail+' 条Overtime ('+Math.round(s.fail/s.total*100)+'%)</span></div><div class=h-bar><div class=fill style=background:'+(s.fail>10?'var(--r)':'var(--a)')+';width:'+Math.max(s.fail/s.total*100,2)+'%></div></div></div>'
+  }).join('')
+
+  // Detail table
+  renderTable()
+}
+
+function renderTable(filter){
+  var rows=filter||allData
+  document.getElementById('filter-count').textContent='共 '+rows.length+' 条'
+  document.getElementById('detail-body').innerHTML=rows.map(function(r){
+    return '<tr><td>'+r.po+'</td><td class=n>'+r.qty+'</td><td class="n '+(r.p_ok?'ok':'fail')+'">'+(r.p_val!=null?r.p_val+'H':'--')+'</td><td class="n '+(r.b_ok?'ok':'fail')+'">'+(r.b_val!=null?r.b_val+'H':'--')+'</td><td class="n '+(r.s_ok?'ok':'fail')+'">'+(r.s_val!=null?r.s_val+'H':'--')+'</td><td class="n '+(r.a_ok?'ok':'fail')+'">'+(r.a_val!=null?r.a_val+'H':'--')+'</td><td class=n>'+F(r.total)+'H</td><td class='+(r.all_ok?'ok':'fail')+'>'+(r.all_ok?'✅ OK':'❌ '+F(r.total)+'H')+'</td></tr>'
+  }).join('')
+}
+
+function filterTable(){
+  var po=document.getElementById('filter-po').value.toUpperCase()
+  var st=document.getElementById('filter-station').value
+  var filtered=allData.filter(function(r){
+    if(po&&r.po.indexOf(po)<0)return false
+    if(st==='planning'&&r.p_ok)return false
+    if(st==='build'&&r.b_ok)return false
+    if(st==='shuttle'&&r.s_ok)return false
+    if(st==='asn'&&r.a_ok)return false
+    return true
+  })
+  renderTable(filtered)
+}
+
+load()
+</script>
+</body>
+</html>

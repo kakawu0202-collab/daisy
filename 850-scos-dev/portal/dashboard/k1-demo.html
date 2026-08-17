@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K1 PRD · UI/UX Pro Max Demo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+:root{
+  --color-primary:#3B82F6;--color-on-primary:#FFFFFF;
+  --color-secondary:#60A5FA;--color-accent:#F59E0B;
+  --color-bg:#0B1220;--color-surface:#111A2E;--color-surface2:#18233B;
+  --color-foreground:#E2E8F0;--color-muted:#64748B;--color-border:#1E293B;
+  --color-border-active:rgba(59,130,246,.35);
+  --color-good:#22C55E;--color-warn:#F59E0B;--color-bad:#EF4444;
+  --radius:10px;--space-1:8px;--space-2:16px;--space-3:24px;
+  --font-body:'Fira Sans',system-ui,sans-serif;--font-mono:'Fira Code',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-foreground);padding:var(--space-3);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)}
+.top h1{font-size:18px;font-weight:600}.top .meta{font-family:var(--font-mono);font-size:11px;color:var(--color-muted)}
+
+/* KPI top3 */
+.top3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-1);margin-bottom:var(--space-2)}
+@media(max-width:640px){.top3{grid-template-columns:1fr}}
+.kpi{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:var(--space-2);transition:border-color 200ms;cursor:pointer}
+.kpi:hover{border-color:var(--color-border-active)}
+.kpi .lbl{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--color-muted);margin-bottom:6px}
+.kpi .val{font-family:var(--font-mono);font-size:28px;font-weight:600;letter-spacing:-.5px}
+.kpi .sub{font-size:10px;color:var(--color-muted);margin-top:4px}
+
+/* Type cards top4 */
+.top4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-1);margin-bottom:var(--space-2)}
+@media(max-width:640px){.top4{grid-template-columns:repeat(2,1fr)}}
+.tcard{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:var(--space-2);text-align:center;cursor:pointer;transition:border-color 200ms}
+.tcard:hover{border-color:var(--color-border-active)}
+.tcard .name{font-size:11px;font-weight:600;margin-bottom:8px}
+.tcard .row{display:flex;justify-content:space-around;font-size:11px;margin-top:4px}
+.tcard .row .mv{font-family:var(--font-mono);font-weight:600;font-size:13px}
+.tcard .row .ml{font-size:9px;color:var(--color-muted);text-transform:uppercase}
+
+/* Section */
+.sec{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:var(--space-2);margin-bottom:var(--space-2)}
+.sec h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--color-muted);margin-bottom:var(--space-2)}
+
+/* Combo: table + chart */
+.combo{display:grid;grid-template-columns:280px 1fr;gap:var(--space-2)}
+@media(max-width:768px){.combo{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--color-muted);border-bottom:2px solid var(--color-border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--color-border);white-space:nowrap;font-family:var(--font-mono);font-size:11px}
+tr:hover td{background:var(--color-surface2)}
+.n{text-align:right}
+.chart{min-height:220px;position:relative;background:var(--color-surface2);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--color-muted);font-size:11px}
+
+/* Grid 2-col for plans */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-1);margin-bottom:var(--space-2)}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+/* Mini bar chart (pure CSS demo) */
+.minibar{display:flex;align-items:flex-end;gap:4px;height:120px;padding:8px;background:var(--color-surface2);border-radius:6px}
+.minibar .bar{flex:1;border-radius:3px 3px 0 0;position:relative;min-width:14px}
+.minibar .bar .tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--color-surface2);border:1px solid var(--color-border);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:9px;white-space:nowrap;opacity:0;transition:opacity 150ms;pointer-events:none}
+.minibar .bar:hover .tooltip{opacity:1}
+
+:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>K1 PRD Dashboard</h1>
+  <span class="meta">Demo · UI/UX Pro Max Design System</span>
+</div>
+
+<!-- Top 3 KPIs -->
+<div class="top3">
+  <div class="kpi" onclick="drill('all')"><div class="lbl">📊 Total Orders</div><div class="val">139,953</div><div class="sub">6,702 POs · PRD</div></div>
+  <div class="kpi" onclick="drill('backlog')"><div class="lbl">📋 Backlog</div><div class="val" style="color:var(--color-warn)">19,498</div><div class="sub">14% unshipped · ASN pending 2,880</div></div>
+  <div class="kpi" onclick="drill('shipped')"><div class="lbl">✅ Shipped</div><div class="val" style="color:var(--color-good)">120,452</div><div class="sub">86% rate</div></div>
+</div>
+
+<!-- Type cards -->
+<div class="top4">
+  <div class="tcard" onclick="drill('cto_p1')">
+    <div class="name" style="color:var(--color-secondary)">⚡ CTO P1</div>
+    <div class="row"><div><div class="mv">6,939</div><div class="ml">Total</div></div><div><div class="mv" style="color:var(--color-good)">6,915</div><div class="ml">Shipped</div></div><div><div class="mv" style="color:var(--color-warn)">24</div><div class="ml">Unship</div></div></div>
+  </div>
+  <div class="tcard" onclick="drill('fga')">
+    <div class="name" style="color:var(--color-warn)">📦 FGA</div>
+    <div class="row"><div><div class="mv">105,052</div><div class="ml">Total</div></div><div><div class="mv" style="color:var(--color-good)">85,580</div><div class="ml">Shipped</div></div><div><div class="mv" style="color:var(--color-warn)">19,472</div><div class="ml">Unship</div></div></div>
+  </div>
+  <div class="tcard" onclick="drill('rtl')">
+    <div class="name" style="color:var(--color-good)">🏪 RTL</div>
+    <div class="row"><div><div class="mv">27,177</div><div class="ml">Total</div></div><div><div class="mv" style="color:var(--color-good)">20,983</div><div class="ml">Shipped</div></div><div><div class="mv" style="color:var(--color-warn)">6,194</div><div class="ml">Unship</div></div></div>
+  </div>
+  <div class="tcard" onclick="drill('cto_p2')">
+    <div class="name" style="color:var(--color-muted)">🔧 CTO P2</div>
+    <div class="row"><div><div class="mv">777</div><div class="ml">Total</div></div><div><div class="mv" style="color:var(--color-good)">777</div><div class="ml">Shipped</div></div><div><div class="mv">0</div><div class="ml">Unship</div></div></div>
+  </div>
+</div>
+
+<!-- Type × Region -->
+<div class="sec">
+  <h3>Order Overview · Type × Region</h3>
+  <div class="combo">
+    <table>
+      <thead><tr><th>Type</th><th class="n">DAO</th><th class="n">APJ</th><th class="n">EMEA</th><th class="n">Total</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:var(--font-body)"><b>⚡ CTO P1</b></td><td class="n">2,431</td><td class="n">1,088</td><td class="n">3,420</td><td class="n"><b>6,939</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>FGA</b></td><td class="n">58,204</td><td class="n">20,103</td><td class="n">26,745</td><td class="n"><b>105,052</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>RTL</b></td><td class="n">14,521</td><td class="n">6,890</td><td class="n">5,766</td><td class="n"><b>27,177</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>CTO P2</b></td><td class="n">410</td><td class="n">202</td><td class="n">165</td><td class="n"><b>777</b></td></tr>
+      </tbody>
+    </table>
+    <div class="chart">Stacked Bar Chart (Chart.js)</div>
+  </div>
+</div>
+
+<!-- Production Status -->
+<div class="sec">
+  <h3>Production Status</h3>
+  <div class="combo">
+    <table>
+      <thead><tr><th>Type</th><th class="n">STBL</th><th class="n">ATB</th><th class="n">WIP</th><th class="n">FG</th><th class="n">Total</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:var(--font-body)"><b>CTO P1</b></td><td class="n">0</td><td class="n">5</td><td class="n">18</td><td class="n">1</td><td class="n"><b>24</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>FGA</b></td><td class="n">2,925</td><td class="n">4,330</td><td class="n">4,623</td><td class="n">7,594</td><td class="n"><b>19,472</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>RTL</b></td><td class="n">0</td><td class="n">0</td><td class="n">4,856</td><td class="n">1,338</td><td class="n"><b>6,194</b></td></tr>
+        <tr><td style="font-family:var(--font-body)"><b>CTO P2</b></td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n"><b>0</b></td></tr>
+      </tbody>
+    </table>
+    <div class="chart">Grouped Bar Chart (Chart.js)</div>
+  </div>
+</div>
+
+<!-- Plans -->
+<div class="grid2">
+  <div class="sec">
+    <h3>MSBD Ship Plan</h3>
+    <div class="minibar">
+      <div class="bar" style="height:40%;background:var(--color-secondary)"><div class="tooltip">08/08: 4,220</div></div>
+      <div class="bar" style="height:55%;background:var(--color-secondary)"><div class="tooltip">08/09: 5,804</div></div>
+      <div class="bar" style="height:35%;background:var(--color-secondary)"><div class="tooltip">08/10: 3,690</div></div>
+      <div class="bar" style="height:70%;background:var(--color-secondary)"><div class="tooltip">08/11: 7,389</div></div>
+      <div class="bar" style="height:50%;background:var(--color-secondary)"><div class="tooltip">08/12: 5,277</div></div>
+      <div class="bar" style="height:25%;background:var(--color-secondary)"><div class="tooltip">08/13: 2,638</div></div>
+      <div class="bar" style="height:15%;background:var(--color-secondary)"><div class="tooltip">08/14: 1,583</div></div>
+    </div>
+  </div>
+  <div class="sec">
+    <h3>CTO P1 · 28H Plan</h3>
+    <div class="minibar">
+      <div class="bar" style="height:20%;background:var(--color-primary)"><div class="tooltip">08/12: 6 pcs</div></div>
+      <div class="bar" style="height:60%;background:var(--color-primary)"><div class="tooltip">08/13: 18 pcs</div></div>
+      <div class="bar" style="height:65%;background:var(--color-primary)"><div class="tooltip">08/14: 19 pcs 🎯</div></div>
+      <div class="bar" style="height:15%;background:var(--color-primary)"><div class="tooltip">08/15: 5 pcs</div></div>
+      <div class="bar" style="height:10%;background:var(--color-primary)"><div class="tooltip">08/16: 3 pcs</div></div>
+      <div class="bar" style="height:30%;background:var(--color-primary)"><div class="tooltip">08/17: 9 pcs</div></div>
+      <div class="bar" style="height:8%;background:var(--color-primary)"><div class="tooltip">08/18: 2 pcs</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function drill(type){alert('Drill-down: '+type+' (demo)')}
+// Load real data from API to populate
+fetch('/api/cache/k1_summary').then(r=>r.json()).then(d=>{
+  if(d.error)return
+  document.querySelector('.kpi .val').textContent=d.total_qty.toLocaleString()
+  // Note: demo uses static numbers for layout preview; real data loads on live page
+}).catch(()=>{})
+</script>
+</body>
+</html>

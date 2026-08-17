@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOS · Cinema Dark Style</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Style: Modern Dark (Cinema) — from ui-ux-pro-max
+   Deep blacks + ambient light blobs + glassmorphism + indigo accent */
+:root{
+  --bg-deep:#020203;--bg-base:#050506;--bg-elevated:#0a0a0c;
+  --surface:rgba(255,255,255,.05);--fg:#EDEDEF;--fg-muted:#8A8F98;
+  --accent:#5E6AD2;--accent-glow:rgba(94,106,210,.25);
+  --border:rgba(255,255,255,.08);--radius:16px;
+  --easing:cubic-bezier(.16,1,.3,1);
+  --good:#4ADE80;--warn:#FBBF24;--bad:#F87171;
+  --s1:8px;--s2:16px;--s3:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(180deg,#0a0a0f 0%,#020203 100%);color:var(--fg);min-height:100vh;padding:var(--s3);font-size:14px;line-height:1.5;overflow-x:hidden}
+/* Ambient light blobs */
+.blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.1;pointer-events:none;animation:float 14s ease-in-out infinite;z-index:0}
+.blob.b1{width:400px;height:400px;background:#5E6AD2;top:-100px;left:-100px}
+.blob.b2{width:350px;height:350px;background:#8B5CF6;bottom:-80px;right:-80px;animation-delay:-7s}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+
+main{position:relative;z-index:1;max-width:1100px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s3)}
+.top h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.top .meta{font-size:11px;color:var(--fg-muted)}
+
+/* KPI Cards — glass, hairline border, accent glow */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s1);margin-bottom:var(--s2)}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .3s var(--easing),border-color .3s;cursor:pointer;position:relative;overflow:hidden}
+.kpi:hover{transform:scale(1.01);border-color:rgba(94,106,210,.4)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent)}
+.kpi .lbl{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:var(--fg-muted);margin-bottom:10px}
+.kpi .val{font-size:30px;font-weight:700;letter-spacing:-1px;text-shadow:0 0 30px var(--accent-glow)}
+.kpi .sub{font-size:10px;color:var(--fg-muted);margin-top:6px}
+
+/* Section — glass panel */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--s2);margin-bottom:var(--s2);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.sec h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--fg-muted);margin-bottom:14px}
+.sec h3::before{content:'· ';color:var(--accent)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:10px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--fg-muted);border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);font-variant-numeric:tabular-nums}
+tr:hover td{background:rgba(255,255,255,.03)}
+.n{text-align:right}
+
+/* Accent button with glow */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:12px;border:1px solid rgba(94,106,210,.5);background:linear-gradient(135deg,rgba(94,106,210,.3),rgba(94,106,210,.15));color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 0 30px var(--accent-glow);transition:transform .3s var(--easing),box-shadow .3s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 0 45px rgba(94,106,210,.4)}
+
+/* Progress */
+.pbar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:10px}
+.pbar .f{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),#8B5CF6);transition:width .8s var(--easing)}
+
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s1);margin-bottom:var(--s2)}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+/* Status pills */
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500}
+.pill.g{background:rgba(74,222,128,.12);color:var(--good)}
+.pill.r{background:rgba(248,113,113,.12);color:var(--bad)}
+.pill.a{background:rgba(251,191,36,.12);color:var(--warn)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+
+<main>
+  <div class="top">
+    <h1>850 SCOS</h1>
+    <span class="meta">Style: Modern Dark (Cinema) · Ambient Glow · Glassmorphism</span>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="lbl">PRD Total</div><div class="val">139,953</div><div class="sub">6,702 POs</div></div>
+    <div class="kpi"><div class="lbl">Backlog</div><div class="val" style="color:var(--warn);text-shadow:0 0 30px rgba(251,191,36,.3)">19,498</div><div class="sub">ASN pending 2,880</div></div>
+    <div class="kpi"><div class="lbl">Shipped</div><div class="val" style="color:var(--good);text-shadow:0 0 30px rgba(74,222,128,.3)">120,452</div><div class="sub">86%</div></div>
+    <div class="kpi"><div class="lbl">CTO P1 Unshipped</div><div class="val" style="color:var(--bad);text-shadow:0 0 30px rgba(248,113,113,.3)">24</div><div class="sub">28H SLA at risk</div></div>
+  </div>
+
+  <div class="sec">
+    <h3>E2E KPI</h3>
+    <table>
+      <thead><tr><th>KPI</th><th class="n">SLA</th><th class="n">Rate</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Planning</td><td class="n">11H</td><td class="n">82%</td><td><span class="pill g">PASS</span></td></tr>
+        <tr><td>Kitting</td><td class="n">3H</td><td class="n">91%</td><td><span class="pill g">PASS</span></td></tr>
+        <tr><td>Build</td><td class="n">12H</td><td class="n">74%</td><td><span class="pill r">FAIL</span></td></tr>
+        <tr><td>Shipment</td><td class="n">1H</td><td class="n">88%</td><td><span class="pill g">PASS</span></td></tr>
+        <tr><td>Shuttle</td><td class="n">5H</td><td class="n">69%</td><td><span class="pill a">WARN</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3>CTO P1 28H This Week</h3>
+      <div style="font-size:34px;font-weight:700;text-shadow:0 0 30px var(--accent-glow)">98.1%</div>
+      <div class="pbar"><div class="f" style="width:98%"></div></div>
+      <div style="font-size:11px;color:var(--fg-muted);margin-top:8px">52/53 POs · Goal ≥75%</div>
+    </div>
+    <div class="sec">
+      <h3>Production Pipeline</h3>
+      <table>
+        <thead><tr><th>Stage</th><th class="n">Qty</th></tr></thead>
+        <tbody>
+          <tr><td>STBL</td><td class="n">2,925</td></tr>
+          <tr><td>ATB</td><td class="n">4,335</td></tr>
+          <tr><td>WIP</td><td class="n">9,497</td></tr>
+          <tr><td>FG</td><td class="n">8,933</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <button class="btn" onclick="location.href='/scos-demo.html'">Compare with Data-Dense</button>
+    <button class="btn" onclick="location.href='/k1.html'">Back to Live</button>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E KPI · 850 SCOS</title>
+<style>
+:root{--bg:#0b1121;--card:#141e33;--card2:#1a2942;--border:rgba(148,163,184,.08);--t1:#f0f4ff;--t2:#94a3be;--t3:#475569;--accent:#638fff;--g:#3dd68c;--a:#f5b842;--r:#e5484d;--ra:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t1);padding:20px;font-size:13px;line-height:1.5}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.top h1{font-size:18px;font-weight:700}.top a{color:var(--accent);text-decoration:none;font-size:11px}
+.bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.bar a,.bar button,.bar select{color:var(--t2);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 14px;text-decoration:none;font-size:11px;cursor:pointer}
+.bar button.ac,.bar a.ac{border-color:var(--accent);color:var(--accent)}
+.bar button:hover,.bar a:hover{border-color:var(--accent);color:var(--t1)}
+.bar select{color:var(--t1)}
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:900px){.grid4{grid-template-columns:repeat(3,1fr)}}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:16px;text-align:center}
+.kpi-card .l{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-card .v{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:2px}
+.kpi-card .s{font-size:10px;margin-top:2px}.kpi-card .g{height:3px;background:var(--card2);border-radius:2px;margin-top:8px;overflow:hidden}.kpi-card .g .f{height:100%;border-radius:2px;transition:width .5s}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--ra);padding:16px;margin-bottom:14px}
+.sec h3{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:7px 10px;background:var(--card2);color:var(--t3);font-size:9px;font-weight:600;border-bottom:2px solid var(--border)}
+td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.03)}.n{text-align:right}
+.pass{color:var(--g)}.fail{color:var(--r)}.open{color:var(--a)}
+.list{max-height:500px;overflow:auto}
+input,select{background:var(--card2);color:var(--t1);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="top"><h1>E2E KPI Analytics</h1><a href="/index.html">← 首页</a></div>
+
+<div class="bar">
+  <a href="/index.html">Home</a>
+  <button onclick="load()">Refresh</button>
+  <select id="period-type" onchange="switchPeriod()">
+    <option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option>
+  </select>
+  <select id="period-select" onchange="switchPeriod()"><option>--</option></select>
+</div>
+
+<div class="grid4" id="kpi-cards"></div>
+
+<div class="sec"><h3>Weekly KPI Trend <span style="font-weight:400;font-size:10px;text-transform:none" id="chart-title"></span></h3>
+  <div style="height:300px"><canvas id="c-trend"></canvas></div>
+</div>
+
+<div class="sec"><h3>CTO P1 28H vs 48H</h3><table><thead><tr><th>Type</th><th class=n>Total</th><th class=n>PASS</th><th class=n>FAIL</th><th class=n>OPEN</th><th class=n>Rate</th><th class=n>Goal</th><th>Status</th></tr></thead><tbody id="cto-table"></tbody></table></div>
+
+<div class="sec"><h3>Exception Details</h3>
+  <input id="f-po" placeholder="Search PO..." oninput="filterEx()">
+  <select id="f-kpi" onchange="filterEx()"><option value="">All KPIs</option></select>
+  <select id="f-status" onchange="filterEx()"><option value="">All</option><option value="PASS">PASS</option><option value="FAIL">FAIL</option><option value="OPEN">OPEN</option></select>
+  <button onclick="downloadCSV()" style="margin-left:4px;background:var(--card2);color:var(--t2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">CSV</button>
+  <div class="list" style="margin-top:8px"><table><thead><tr><th>PO</th><th class=n>Line</th><th>P</th><th>KPI</th><th class=n>Hours</th><th class=n>SLA</th><th class=n>Over</th><th>Status</th><th>Clean</th><th>Week</th></tr></thead><tbody id="ex-table"></tbody></table></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+var allEx=[],kpis={},weekly={},monthly={},quarterly={},periodData={},currentPeriod='weekly'
+
+async function load(){
+  try{var data=await(await fetch('/api/cache/e2e_kpi')).json()}catch(e){document.body.innerHTML='No E2E KPI data';return}
+  kpis=data.kpis||{};allEx=data.exceptions||[];weekly=data.weekly||{};monthly=data.monthly||{};quarterly=data.quarterly||{}
+  periodData=weekly
+  // Populate KPI filter
+  var kpiList=Object.entries(kpis).map(function(e){return'<option value='+e[0]+'>'+e[1].name+'</option>'}).join('')
+  document.getElementById('f-kpi').innerHTML='<option value="">All KPIs</option>'+kpiList
+  // Populate period select
+  var periods=Object.keys(periodData).sort();if(!periods.length)periods=Object.keys(weekly).sort()
+  document.getElementById('period-select').innerHTML=periods.map(function(p){return'<option>'+p+'</option>'}).join('')
+  switchPeriod()
+}
+
+function switchPeriod(){
+  currentPeriod=document.getElementById('period-type').value
+  periodData=currentPeriod==='weekly'?weekly:currentPeriod==='monthly'?monthly:quarterly
+  var periods=Object.keys(periodData).sort()
+  document.getElementById('period-select').innerHTML=periods.map(function(p){return'<option>'+p+'</option>'}).join('')
+  renderKPI()
+}
+
+function renderKPI(){
+  var sel=document.getElementById('period-select').value
+  var pd=periodData[sel]||{},html=''
+  document.getElementById('chart-title').textContent=sel||'All'
+  // KPI cards from selected period
+  var cardData=pd
+  if(!Object.keys(cardData).length)cardData=kpis
+  Object.entries(cardData).forEach(function(e){
+    var key=e[0],d=e[1],pct=d.pass_pct!=null?d.pass_pct:Math.round(d.pass_rate*100)
+    var cfg=kpis[key]||{},goal=(cfg.goal||0.75)*100,gap=Math.round(pct-goal)
+    var color=pct>=goal?'var(--g)':'var(--r)'
+    html+='<div class=kpi-card><div class=l>'+(cfg.name||key)+'</div><div class=v style=color:'+color+'>'+pct+'%</div><div class=s style=color:'+color+'>Goal '+goal+'% ('+(gap>=0?'+':'')+gap+'%)</div><div class=g><div class=f style=width:'+Math.min(pct,100)+'%;background:'+color+'></div></div></div>'
+  })
+  document.getElementById('kpi-cards').innerHTML=html
+  renderCTO()
+  // Trend chart
+  setTimeout(drawChart,300)
+}
+
+function renderCTO(){
+  var clean=kpis.cto_p1_clean||{},non=kpis.cto_p1_48h||{}
+  document.getElementById('cto-table').innerHTML=
+    '<tr><td>CTO P1 Clean (28H)</td><td class=n>'+F(clean.total||0)+'</td><td class="n pass">'+F(clean.pass||0)+'</td><td class="n fail">'+F(clean.fail||0)+'</td><td class="n open">'+F(clean.open||0)+'</td><td class="n '+(clean.above_goal?'pass':'fail')+'">'+(clean.pass_pct||0)+'%</td><td class=n>75%</td><td class='+(clean.above_goal?'pass':'fail')+'>'+(clean.above_goal?'ABOVE':'BELOW')+'</td></tr>'+
+    '<tr><td>CTO P1 Non-Clean (48H)</td><td class=n>'+F(non.total||0)+'</td><td class="n pass">'+F(non.pass||0)+'</td><td class="n fail">'+F(non.fail||0)+'</td><td class="n open">'+F(non.open||0)+'</td><td class="n '+(non.above_goal?'pass':'fail')+'">'+(non.pass_pct||0)+'%</td><td class=n>75%</td><td class='+(non.above_goal?'pass':'fail')+'>'+(non.above_goal?'ABOVE':'BELOW')+'</td></tr>'
+}
+
+function drawChart(){
+  var ctx=document.getElementById('c-trend');if(!ctx)return
+  var c=Chart.getChart('c-trend');if(c)c.destroy()
+  var periods=Object.keys(periodData).sort(),cto_clean=[],cto_48=[],labels=[]
+  periods.forEach(function(p){
+    var pd=periodData[p]||{}
+    var cl=pd.cto_p1_clean||{},ncl=pd.cto_p1_48h||{}
+    labels.push(p);cto_clean.push(cl.pass_pct||null);cto_48.push(ncl.pass_pct||null)
+  })
+  if(!labels.length)return
+  new Chart(ctx,{type:'line',data:{labels:labels,datasets:[
+    {label:'CTO P1 28H (Clean)',data:cto_clean,borderColor:'#3dd68c',tension:.2,pointRadius:2,spanGaps:false},
+    {label:'CTO P1 48H (Non-Clean)',data:cto_48,borderColor:'#f5b842',tension:.2,pointRadius:2,spanGaps:false,borderDash:[4,2]},
+    {label:'Goal 75%',data:labels.map(function(){return 75}),borderColor:'#475569',borderDash:[2,2],pointRadius:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#475569',font:{size:9},maxTicksLimit:15}},y:{min:0,max:100,ticks:{color:'#475569',font:{size:9}}}},plugins:{legend:{position:'bottom',labels:{color:'#94a3be',font:{size:10},padding:8,boxWidth:12}}}}})
+  filterEx()
+}
+
+function filterEx(){
+  var po=document.getElementById('f-po').value.toUpperCase()
+  var kpi=document.getElementById('f-kpi').value
+  var st=document.getElementById('f-status').value
+  var rows=allEx.filter(function(x){
+    if(po&&x.po.indexOf(po)<0)return false;if(kpi&&x.kpi!==kpi)return false;if(st&&x.status!==st)return false;return true
+  })
+  document.getElementById('ex-table').innerHTML=rows.map(function(x){
+    return'<tr><td>'+x.po+'</td><td class=n>'+x.po_line+'</td><td>'+x.priority+'</td><td>'+x.kpi+'</td><td class=n>'+(x.elapsed_hours!=null?x.elapsed_hours+'H':'--')+'</td><td class=n>'+x.sla_hours+'H</td><td class="n fail">'+(x.over_hours>0?x.over_hours+'H':'')+'</td><td class="'+(x.status==='PASS'?'pass':x.status==='FAIL'?'fail':'open')+'">'+x.status+'</td><td>'+(x.clean?'✅':'❌')+'</td><td>'+x.week+'</td></tr>'
+  }).join('')
+}
+
+function downloadCSV(){
+  var csv='PO,Line,Priority,KPI,Hours,SLA,Over,Status,Clean,Week\n'
+  allEx.forEach(function(x){csv+=x.po+','+x.po_line+','+x.priority+','+x.kpi+','+(x.elapsed_hours||'')+','+x.sla_hours+','+x.over_hours+','+x.status+','+x.clean+','+x.week+'\n'})
+  var b=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'})
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='e2e_kpi.csv';a.click()
+}
+
+load()
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOS · Glass vs Brutal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0d1117;color:#e6edf3;padding:24px;min-height:100vh}
+h1{font-size:20px;margin-bottom:4px}
+.sub{font-size:12px;color:#8b949e;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.panel{border-radius:14px;padding:20px;min-height:500px}
+.panel h2{font-size:15px;margin-bottom:4px}
+.panel .desc{font-size:11px;margin-bottom:16px;opacity:.7}
+
+/* ═══ GLASSMORPHISM ═══ */
+.glass{background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.2),rgba(217,70,239,.15))}
+.glass .gp{position:relative}
+.glass .gblob{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none}
+.glass .gblob.g1{width:250px;height:250px;background:#6366f1;top:40px;left:20px;opacity:.5}
+.glass .gblob.g2{width:200px;height:200px;background:#d946ef;bottom:40px;right:20px;opacity:.4}
+.glass .gcard{position:relative;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:16px;margin-bottom:10px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.glass .gcard .l{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.65;margin-bottom:6px}
+.glass .gcard .v{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.glass .grow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.glass .gpill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25)}
+
+/* ═══ NEO-BRUTALISM ═══ */
+.brutal{background:#F5F2EA;color:#111;font-family:'Space Grotesk','Inter',sans-serif}
+.brutal .bcard{background:#fff;border:3px solid #111;border-radius:0;padding:16px;margin-bottom:10px;box-shadow:5px 5px 0 #111;transition:box-shadow .15s,transform .15s}
+.brutal .bcard:hover{box-shadow:2px 2px 0 #111;transform:translate(3px,3px)}
+.brutal .bcard .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.brutal .bcard .v{font-size:28px;font-weight:700}
+.brutal .brow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.brutal .btag{display:inline-block;padding:4px 10px;border:2px solid #111;font-size:10px;font-weight:700;text-transform:uppercase}
+.brutal .btag.y{background:#FFDE59}.brutal .btag.g{background:#7DFC7D}.brutal .btag.r{background:#FF6B6B}
+.brutal .bar{height:14px;border:3px solid #111;background:#fff;margin-top:8px}
+.brutal .bar .f{height:100%;background:#111}
+</style>
+</head>
+<body>
+<h1>850 SCOS · Style Comparison</h1>
+<div class="sub">Glassmorphism vs Neo-Brutalism — ui-ux-pro-max</div>
+
+<div class="grid">
+  <!-- GLASSMORPHISM -->
+  <div class="panel glass">
+    <h2 style="color:#fff">🫧 Glassmorphism</h2>
+    <div class="desc" style="color:#fff">Frosted glass · backdrop blur 20px · translucent layers · vibrant background blobs</div>
+    <div class="gp">
+      <div class="gblob g1"></div><div class="gblob g2"></div>
+      <div class="grow">
+        <div class="gcard"><div class="l">PRD Total</div><div class="v">139,953</div></div>
+        <div class="gcard"><div class="l">Backlog</div><div class="v" style="color:#fbbf24">19,498</div></div>
+        <div class="gcard"><div class="l">Shipped</div><div class="v" style="color:#4ade80">120,452</div></div>
+        <div class="gcard"><div class="l">CTO P1</div><div class="v" style="color:#f87171">24</div></div>
+      </div>
+      <div class="gcard">
+        <div class="l">E2E KPI</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <span class="gpill">Planning 82%</span><span class="gpill">Kitting 91%</span>
+          <span class="gpill">Build 74%</span><span class="gpill">Shipment 88%</span>
+        </div>
+      </div>
+      <div class="gcard">
+        <div class="l">CTO P1 28H</div>
+        <div class="v">98.1%</div>
+        <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:10px;overflow:hidden">
+          <div style="width:98%;height:100%;background:linear-gradient(90deg,#4ade80,#22d3ee);border-radius:3px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEO-BRUTALISM -->
+  <div class="panel brutal">
+    <h2>⚡ Neo-Brutalism</h2>
+    <div class="desc" style="color:#555">Thick borders · hard shadows · no radius · raw contrast</div>
+    <div class="brow">
+      <div class="bcard"><div class="l">PRD Total</div><div class="v">139,953</div></div>
+      <div class="bcard"><div class="l">Backlog</div><div class="v" style="color:#e11">19,498</div></div>
+      <div class="bcard"><div class="l">Shipped</div><div class="v" style="color:#0a0">120,452</div></div>
+      <div class="bcard"><div class="l">CTO P1</div><div class="v">24</div></div>
+    </div>
+    <div class="bcard">
+      <div class="l">E2E KPI</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <span class="btag g">Planning 82%</span><span class="btag g">Kitting 91%</span>
+        <span class="btag r">Build 74%</span><span class="btag y">Ship 88%</span>
+      </div>
+    </div>
+    <div class="bcard">
+      <div class="l">CTO P1 28H</div>
+      <div class="v">98.1%</div>
+      <div class="bar"><div class="f" style="width:98%"></div></div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;display:flex;gap:10px">
+  <a href="/scos-demo.html" style="color:#58a6ff;font-size:12px">← Data-Dense</a>
+  <a href="/style-cinema.html" style="color:#58a6ff;font-size:12px">← Cinema Dark</a>
+  <a href="/k1.html" style="color:#58a6ff;font-size:12px">Live K1</a>
+</div>
+</body>
+</html>

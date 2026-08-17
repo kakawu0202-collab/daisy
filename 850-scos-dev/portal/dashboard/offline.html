@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>离线 — Yumin K1</title>
+<style>
+:root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px; text-align: center;
+}
+.card {
+  background: var(--card); border: 1px solid #334155; border-radius: 16px;
+  padding: 40px 32px; max-width: 360px; width: 100%;
+}
+.icon { font-size: 64px; margin-bottom: 16px; }
+h1 { font-size: 18px; margin-bottom: 8px; }
+p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.btn {
+  display: inline-block; padding: 10px 24px; background: var(--accent);
+  color: #fff; border: none; border-radius: 8px; font-size: 14px;
+  cursor: pointer; text-decoration: none; font-weight: 600;
+}
+.status { font-size: 11px; color: var(--muted); margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">📡</div>
+  <h1>当前离线</h1>
+  <p>无法连接到 Yumin K1 服务器。<br>请检查网络连接后重试。</p>
+  <button class="btn" onclick="location.reload()">🔄 重新连接</button>
+  <div class="status" id="status"></div>
+</div>
+<script>
+document.getElementById('status').textContent =
+  '最后在线: ' + new Date().toLocaleString('zh-CN');
+window.addEventListener('online', function() { location.reload(); });
+</script>
+</body>
+</html>
