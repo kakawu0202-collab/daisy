@@ -12,7 +12,7 @@ import os, json, time, requests
 from datetime import datetime
 
 YUMIN_URL = os.environ.get('YUMIN_URL', '')
-YUMIN_LOCAL = 'http://localhost:5050/sync'
+YUMIN_LOCAL = 'http://localhost:5051/sync'  # dev: local dev portal (prod is 5050)
 YUMIN_REMOTE = 'https://yumin.taila2a2ad.ts.net/sync'
 
 # Max records per request — split large pushes into chunks
