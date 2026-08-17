@@ -6,16 +6,33 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-17T17:05:49.171Z
+  modified: 2026-08-17T17:21:15.931Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
 
+## 版本与环境（2026-08-18 起）
+
+- **线上 = `d:\workspace\850-scos`（v1.0.0，代码内版本号 scos-1.0）— 已冻结，不再直接改**
+- **开发 = `d:\workspace\850-scos-dev` — 所有新功能在这里做**
+- 端口隔离：线上 5050/8700/8900 vs dev 5051/8701/8901（env: SCOS_PORTAL_PORT/SCOS_ENGINE_PORT/SCOS_CONTROL_PORT/YUMIN_URL）
+- dev Engine 推送目标 = http://localhost:5051/sync（本机闭环，绝不推线上）
+- dev 数据 = 线上 2026-08-18 快照副本（data/*.db），改坏可重拷
+- dev 启动：start-dev.bat（Portal 控制台）/ start-dev-silent.vbs（双服务静默）/ start-engine-dev.bat（Engine）
+- **禁忌：dev 机上严禁 taskkill python.exe 全局杀进程（会杀线上 Portal）**
+- 版本规则：dev 验证通过后增量合并回线上并升级版本号（VERSION.md）
+
+## 开发路线（三线并行，优先级顺序）
+
+1. **拆层**：Business Engine 从 data-engine/processor 独立（k1/daily/risk/kpi/e2e_kpi → business-engine/，merge 留在 Data Engine），规则配置化 JSON
+2. **Portal 工具**：ASN Checker（最优先）→ ST Validator → Excel Generator，零业务逻辑只调 API
+3. **AI Engine**：`ai-engine/` 起步，NL 查询 → Service Layer API（只读），先做"问数据"闭环
+
 ## 备份
 
 - `d:\workspace\850-scos-backup-20260818.zip` (2.3 MB) — 完整项目快照（含 data/ 数据库）
-- GitHub `kakawu0202-collab/daisy` main 分支 — 源码快照（commit `3de7ce2`，2026-08-18）+ `memory-backup/` 记忆全量备份
-- 同步方式：改动后运行 `git add 850-scos memory-backup; git commit; git push`（node_modules/data 已被 .gitignore 排除）
+- GitHub `kakawu0202-collab/daisy` main 分支 — 源码快照（commit `9c93d1d`，2026-08-18）+ `memory-backup/` 记忆全量备份
+- 同步方式：改动后运行 `git add 850-scos-dev memory-backup; git commit; git push`（node_modules/data 已被 .gitignore 排除）
 
 ## 项目结构
 
