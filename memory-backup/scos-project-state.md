@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-17T17:21:15.931Z
+  modified: 2026-08-18T16:48:55.827Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -22,11 +22,18 @@ metadata:
 - **禁忌：dev 机上严禁 taskkill python.exe 全局杀进程（会杀线上 Portal）**
 - 版本规则：dev 验证通过后增量合并回线上并升级版本号（VERSION.md）
 
-## 开发路线（三线并行，优先级顺序）
+## 开发路线（严格串行：拆层 → Service Layer → Tools → Config → AI）
 
-1. **拆层**：Business Engine 从 data-engine/processor 独立（k1/daily/risk/kpi/e2e_kpi → business-engine/，merge 留在 Data Engine），规则配置化 JSON
-2. **Portal 工具**：ASN Checker（最优先）→ ST Validator → Excel Generator，零业务逻辑只调 API
-3. **AI Engine**：`ai-engine/` 起步，NL 查询 → Service Layer API（只读），先做"问数据"闭环
+- ✅ **M1 拆层（2026-08-19 完成，v1.1-dev，⏳ 未上线待确认）**：
+  - business-engine/ 独立（engine.py + config/kpi_config.json + kpi/{kpi,e2e_kpi}.py + rules/risk.py + summary/{k1,daily}.py）
+  - data-engine/processor 只剩 merge.py；scheduler 纯编排；git tag M1-start 可回滚
+  - 回归：old vs new 100% 一致（baseline.json 在 850-scos-dev/regression/，10.7MB）
+  - 已知 v1.0 既有现象（非 M1 引入）：K1 shipped+unshipped 与 total 差 3（超发截断）；本周无 CTO P1 出货时 KPI weekly 缺本周桶
+  - 上线方式：确认后把 business-engine/ 和改动文件复制回 850-scos（需重启线上 Portal）
+- ⏭️ Phase 2：Service Layer 标准化（/api/k1 /api/e2e /api/risk /api/nack）
+- ⏭️ Phase 3-4：ASN Checker / ST Validator / Excel Generator
+- ⏭️ Phase 5：Config Rule Engine（risk 阈值/kpi 28H/UNCLEAN_HOLDS 配置化；merge 的 status_label/cto_p1 也在此阶段）
+- ⏭️ Phase 6-7：AI Engine + AI Assistant（只调 Service Layer API）
 
 ## 备份
 
