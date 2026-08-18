@@ -3,11 +3,12 @@ import sys, os, json, sqlite3
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data-engine'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'business-engine'))
 from storage.db import get_db, put_cache
-from processor.k1 import compute as k1_compute
-from processor.daily import compute as daily_compute
-from processor.risk import compute as risk_compute
-from processor.kpi import compute as kpi_compute
+from summary.k1 import compute as k1_compute
+from summary.daily import compute as daily_compute
+from rules.risk import compute as risk_compute
+from kpi.kpi import compute as kpi_compute
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 

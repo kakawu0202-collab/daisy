@@ -6,7 +6,7 @@ Produces KPIs + exceptions + quarterly/monthly/weekly summaries.
 import json, os
 from datetime import datetime, timedelta
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kpi_config.json')
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'kpi_config.json')
 # Hold codes that mark a PO as "unclean" (had hold history)
 UNCLEAN_HOLDS = {'A01','A02','A03','A04','A05','A06','A07','A09','A11','A12','A13','A14',
                  'A21','A22','A23','A24','A27','A32','A35','D01','D04','D05'}
