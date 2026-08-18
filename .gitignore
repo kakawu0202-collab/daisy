@@ -16,3 +16,4 @@ _internal/
 850PO_data/*.png
 *.log
 .env
+regression/golden/

@@ -146,7 +146,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.1-dev'})
 
     def _serve_cache(self, key):
         conn = _db()
