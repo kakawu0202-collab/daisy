@@ -70,8 +70,8 @@ def handle_sync(payload):
             conn.execute(f'INSERT OR REPLACE INTO orders ({",".join(FIELDS)}) VALUES ({",".join("?" for _ in FIELDS)})', vals)
             added += 1
 
-    # Store cache items (k1_summary, daily_summary, risks, kpi)
-    for key in ('k1_summary', 'daily_summary', 'risks', 'risk_summary', 'kpi', 'e2e_kpi'):
+    # Store cache items (k1_summary, daily_summary, risks, kpi, e2e_kpi, asn_check)
+    for key in ('k1_summary', 'daily_summary', 'risks', 'risk_summary', 'kpi', 'e2e_kpi', 'asn_check'):
         data = payload.get(key)
         if data:
             conn.execute('INSERT OR REPLACE INTO cache (key,data,computed_at) VALUES (?,?,?)',

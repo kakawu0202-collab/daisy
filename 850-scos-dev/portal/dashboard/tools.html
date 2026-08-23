@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>850 SCOS · Tools</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--b2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#3b82f6;--g:#22c55e;--r:#ef4444;--a:#f59e0b;--rd:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);padding:24px;min-height:100vh;font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.top h1{font-size:20px}.top .t{font-size:11px;color:var(--muted)}
+.back{font-size:12px;color:var(--muted);text-decoration:none}.back:hover{color:var(--text)}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 18px;background:var(--card);border:1px solid var(--b2);border-radius:8px;cursor:pointer;font-size:12px;color:var(--muted)}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab .soon{font-size:10px;opacity:.7;margin-left:4px}
+.panel{background:var(--card);border:1px solid var(--b2);border-radius:var(--rd);padding:20px;max-width:900px}
+.search{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.search input{flex:1;min-width:200px;padding:10px 14px;background:var(--bg);border:1px solid var(--b2);border-radius:8px;color:var(--text);font-size:13px}
+.search input:focus{outline:none;border-color:var(--accent)}
+.search button{padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.search button:hover{opacity:.85}
+.hint{font-size:11px;color:var(--muted);margin-bottom:16px}
+#result{margin-top:4px}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px;margin-bottom:12px}
+.badge.PASS{background:rgba(34,197,94,.15);color:var(--g)}
+.badge.PARTIAL{background:rgba(245,158,11,.15);color:var(--a)}
+.badge.PENDING{background:rgba(59,130,246,.15);color:var(--accent)}
+.badge.NACK,.badge.NOT_FOUND{background:rgba(239,68,68,.15);color:var(--r)}
+.badge.HOLD{background:rgba(245,158,11,.15);color:var(--a)}
+.badge.OPEN{background:rgba(148,163,184,.15);color:var(--muted)}
+.meta{font-size:11px;color:var(--muted);margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.sc{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:12px}
+.sc .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.sc .v{font-size:16px;font-weight:700}
+.checks{margin-bottom:16px}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:12px}
+.chk.error{background:rgba(239,68,68,.1);color:#fca5a5}
+.chk.warn{background:rgba(245,158,11,.1);color:#fcd34d}
+.chk.info{background:rgba(59,130,246,.1);color:#93c5fd}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px;color:var(--muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--b2)}
+td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04)}
+td.n{text-align:right}
+.err{color:var(--r);font-size:12px;padding:12px 0}
+.loading{color:var(--muted);font-size:12px;padding:12px 0}
+</style>
+</head>
+<body>
+<div class="top"><div><h1>850 SCOS · Tools</h1></div><a class="back" href="/index.html">← 返回首页</a></div>
+
+<div class="tabs">
+  <div class="tab on" onclick="switchTab('asn')">ASN Checker</div>
+  <div class="tab" onclick="switchTab('st')">ST Validator<span class="soon">(Phase 4)</span></div>
+  <div class="tab" onclick="switchTab('excel')">Excel Generator<span class="soon">(Phase 4)</span></div>
+</div>
+
+<div class="panel" id="tab-asn">
+  <div class="search">
+    <input type="text" id="asn-input" placeholder="输入 ASN 编号，例如 850xxxxxxxx" onkeydown="if(event.key==='Enter')checkAsn()">
+    <button onclick="checkAsn()">Check</button>
+  </div>
+  <div class="hint">校验由 Business Engine 计算（SN_STATUS / NACK / Hold / 出货数量），本页只读 /api/asn。</div>
+  <div id="result"></div>
+</div>
+
+<div class="panel" id="tab-st" style="display:none">
+  <div class="hint">ST Validator 将于 Phase 4 上线——输入 ST 编号做业务校验。</div>
+</div>
+
+<div class="panel" id="tab-excel" style="display:none">
+  <div class="hint">Excel Generator 将于 Phase 4 上线——按过滤条件导出 XLSX。</div>
+</div>
+
+<script>
+var F=function(n){return(n||0).toLocaleString()}
+function switchTab(t){
+  ['asn','st','excel'].forEach(function(x){
+    document.getElementById('tab-'+x).style.display=(x===t)?'block':'none'
+  })
+  var tabs=document.querySelectorAll('.tab')
+  tabs.forEach(function(el){el.className='tab'})
+  document.querySelectorAll('.tab')[['asn','st','excel'].indexOf(t)].className='tab on'
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function A(t){if(!t)return'--';var s=Math.floor((Date.now()-new Date(t))/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
+
+async function checkAsn(){
+  var box=document.getElementById('asn-input'),out=document.getElementById('result')
+  var asn=box.value.trim()
+  if(!asn){out.innerHTML='<div class=err>请输入 ASN 编号</div>';return}
+  out.innerHTML='<div class=loading>Checking...</div>'
+  try{
+    var r=await fetch('/api/asn?asn='+encodeURIComponent(asn))
+    var d=await r.json()
+    if(!d.found){
+      out.innerHTML='<span class="badge NOT_FOUND">NOT FOUND</span><div class=meta>ASN '+esc(asn)+' 在系统数据中不存在'+(d.computed_at?' · 数据更新于 '+A(d.computed_at):'')+'</div>'
+      return
+    }
+    var c=d.check
+    var h='<span class="badge '+c.result+'">'+c.result+'</span>'
+    h+='<div class=meta>ASN '+esc(c.asn)+' · 数据更新于 '+A(d.computed_at)+(c.ship_date?' · 出货日 '+esc(c.ship_date):'')+'</div>'
+    h+='<div class="grid2">'
+    h+='<div class=sc><div class=l>ASN QTY</div><div class=v>'+F(c.qty)+'</div></div>'
+    h+='<div class=sc><div class=l>已出货</div><div class=v>'+F(c.shipped_total)+'</div></div>'
+    h+='<div class=sc><div class=l>待出货</div><div class=v>'+F(c.pending_qty)+'</div></div>'
+    h+='<div class=sc><div class=l>SN STATUS</div><div class=v>'+esc(c.sn_status||'--')+'</div></div>'
+    h+='<div class=sc><div class=l>ASN STATUS</div><div class=v>'+esc(c.asn_status||'--')+'</div></div>'
+    h+='<div class=sc><div class=l>PO 数量</div><div class=v>'+F(c.po_count)+'</div></div>'
+    h+='</div>'
+    if(c.truck_no||c.scac){h+='<div class=meta>Truck: '+esc(c.truck_no||'--')+' · SCAC: '+esc(c.scac||'--')+' · Raw SHIP_QTY: '+F(c.ship_qty_raw)+'</div>'}
+    if(c.checks&&c.checks.length){
+      h+='<div class=checks>'
+      c.checks.forEach(function(k){h+='<div class="chk '+k.level+'">'+esc(k.detail)+'</div>'})
+      h+='</div>'
+    }
+    h+='<table><thead><tr><th>PO</th><th class=n>PO QTY</th><th class=n>Shipped</th><th>状态</th><th>Hold</th><th>SN</th></tr></thead><tbody>'
+    c.pos.forEach(function(p){
+      h+='<tr><td>'+esc(p.po)+(p.cto_p1==='Y'?' ⚡':'')+'</td><td class=n>'+F(p.po_qty)+'</td><td class=n>'+F(p.shipped_qty)+'</td><td>'+esc(p.status||'')+'</td><td>'+(p.is_hold==='Y'||p.hold_code?'⚠ '+esc(p.hold_code||'Y'):'')+'</td><td>'+esc(p.sn_cdt||'--')+'</td></tr>'
+    })
+    h+='</tbody></table>'
+    out.innerHTML=h
+  }catch(e){
+    out.innerHTML='<div class=err>查询失败：'+esc(e.message)+'（asn_check 数据未同步？）</div>'
+  }
+}
+</script>
+</body>
+</html>

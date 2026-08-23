@@ -25,6 +25,16 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.3-dev（2026-08-23）— Phase 3 ASN Checker（在 v1.2-dev 之上）
+
+- Business Engine 新增 `rules/asn.py`：按 ASN 聚合 + 业务校验（NACK/HOLD/PASS/PARTIAL/PENDING/OPEN）
+- 数据链：engine.run 新增 asn_check 结果 → cache → push → sync（全加法式，旧 5 项不变）
+- Service Layer：`/api/asn?asn=X`（found/check/meta/computed_at，404=NOT_FOUND，400=缺参）
+- Portal：`tools.html`（ASN Checker Tab 可用，ST/Excel 为 Phase 4 占位）+ 首页 Quick Links 入口
+- 同日回归 check-live 通过：M1-start 旧代码 vs 新代码 5 基线键 100% 一致（从 git 取旧代码同日对比，跨天无时间漂移）
+- 端点验证：真实 ASN → PASS（qty=11/9 PO）；bogus→404；缺参→400；tools.html 200
+- ⏳ 未上线——随 v1.1/v1.2 一起等待确认
+
 ## v1.2-dev（2026-08-23）— Phase 2 Service Layer 标准化（在 v1.1-dev 之上）
 
 - 新增标准端点：`/api/k1` `/api/daily` `/api/kpi` `/api/e2e` `/api/risk` `/api/risk-summary` `/api/nack`

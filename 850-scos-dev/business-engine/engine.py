@@ -14,21 +14,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from summary.k1 import compute as k1_compute
 from summary.daily import compute as daily_compute
 from rules.risk import compute as risk_compute
+from rules.asn import compute as asn_compute
 from kpi.kpi import compute as kpi_compute
 from kpi.e2e_kpi import compute_all as e2e_kpi_compute
 
 
 def run(records, raw_ship=None, raw_asn=None, raw_e2e=None):
-    """Execute all business rules. 算法与 v1.0.0 完全一致（M1 只搬不拆）。"""
+    """Execute all business rules. v1.0/v1.1 五项算法不变；asn_check 为 Phase 3 新增。"""
     k1 = k1_compute(records)
     daily = daily_compute(records, raw_ship or [], raw_asn or [])
     risks = risk_compute(records)
     kpi = kpi_compute(records)
     e2e_kpi = e2e_kpi_compute(raw_e2e or [], records)
+    asn_check = asn_compute(records, raw_asn, raw_ship)
     return {
         'k1_summary': k1,
         'daily_summary': daily,
         'risks': risks,
         'kpi': kpi,
         'e2e_kpi': e2e_kpi,
+        'asn_check': asn_check,
     }

@@ -113,6 +113,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._serve_cache('risk_summary')
             elif p == '/api/nack':
                 self._query_nack()
+            elif p == '/api/asn':
+                self._query_asn()
             # compat: old dashboard endpoints
             elif p == '/api/k1-summary':
                 self._serve_cache('k1_summary')
@@ -162,7 +164,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.2-dev'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.3-dev'})
 
     def _serve_cache(self, key):
         conn = _db()
@@ -245,6 +247,28 @@ class Handler(SimpleHTTPRequestHandler):
         extra = parsed.query
         self.path = parsed.path + '?ack_status=REJECT' + (('&' + extra) if extra else '')
         self._query_orders()
+
+    def _query_asn(self):
+        """ASN 校验查询 — 读 asn_check 缓存（Business Engine 计算结果）。零业务逻辑。"""
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        asn = (qs.get('asn', [''])[0]).strip()
+        if not asn:
+            self._json({'error': 'Missing asn param'}, 400)
+            return
+        conn = _db()
+        row = conn.execute("SELECT data, computed_at FROM cache WHERE key='asn_check'").fetchone()
+        conn.close()
+        if not row:
+            self._json({'error': 'asn_check cache not available', 'computed_at': None}, 404)
+            return
+        data = json.loads(row['data'])
+        entry = data.get(asn)
+        if entry is None:
+            self._json({'found': False, 'asn': asn, 'result': 'NOT_FOUND',
+                        'computed_at': row['computed_at'], 'meta': data.get('__meta', {})}, 404)
+            return
+        self._json({'found': True, 'computed_at': row['computed_at'],
+                    'meta': data.get('__meta', {}), 'check': entry})
 
     def _sync(self):
         sys.path.insert(0, RECEIVER)

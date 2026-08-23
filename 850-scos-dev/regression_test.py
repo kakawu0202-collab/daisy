@@ -3,10 +3,14 @@
 用法：
   python regression_test.py baseline    # 用 OLD 代码(processor/*)生成 baseline.json
   python regression_test.py check       # 用 NEW 代码(business-engine)对比 baseline.json
+  python regression_test.py check-live  # 同日回归：从 git M1-start 提取旧代码，与当前新代码同输入对比
   python regression_test.py golden      # 快照 dev portal.db 现有 cache 为 golden/*.json
 
 输入：dev engine.db 现有 orders 记录（与 merge 输出同构）+ 空 raw ship/asn
-验收：check 模式 diff 必须为空（100% 一致）。
+验收：check / check-live 模式 diff 必须为空（100% 一致）。
+
+注意：baseline.json 含"相对今天"的时间窗口（趋势/MSBD plan/日报日期），
+跨天对比会产生时间漂移假差异 → 跨天验证用 check-live（同日跑旧新代码）。
 """
 import sys, os, json, sqlite3
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -108,13 +112,17 @@ def cmd_check():
     print(f'Inputs: {len(rows)} orders, {len(e2e_recs)} e2e-like records')
     print('Running NEW code (business-engine)...')
     new = run_new(rows, e2e_recs, raw_ship, raw_asn)
-    diffs = deep_diff(baseline, new)
+    # 基线键必须逐值一致；新增键（Phase 3+ 加法式功能）允许存在
+    diffs = deep_diff(baseline, {k: new[k] for k in baseline}, '')
+    extra = set(new) - set(baseline)
+    if extra:
+        print(f'  (new keys added — allowed: {sorted(extra)})')
     if diffs:
         print(f'\n❌ {len(diffs)} differences found:')
         for d in diffs[:40]:
             print('  ' + d)
         sys.exit(1)
-    print('\n✅ 100% identical — old vs new outputs match exactly.')
+    print('\n✅ baseline keys 100% identical — old outputs unchanged.')
 
 
 def cmd_golden():
@@ -133,10 +141,56 @@ def cmd_golden():
     conn.close()
 
 
+def cmd_check_live():
+    """同日回归：从 git M1-start 提取旧代码（processor/*），与当前新代码同输入对比。
+    用于跨天验证（baseline.json 的时间窗口会漂移）。"""
+    import subprocess, tempfile, zipfile, shutil
+    tmp = tempfile.mkdtemp(prefix='scos-old-')
+    zipf = os.path.join(tmp, 'old.zip')
+    subprocess.run(['git', '-C', os.path.dirname(ROOT), 'archive', 'M1-start',
+                    '850-scos-dev/data-engine', '-o', zipf], check=True)
+    with zipfile.ZipFile(zipf) as z:
+        z.extractall(tmp)
+    old_de = os.path.join(tmp, '850-scos-dev', 'data-engine')
+    assert os.path.exists(os.path.join(old_de, 'processor', 'k1.py')), 'old code extraction failed'
+
+    rows, e2e_recs, raw_ship, raw_asn = load_inputs()
+    print(f'Inputs: {len(rows)} orders, {len(e2e_recs)} e2e-like records')
+
+    # 旧代码（今日运行）— 指向同一 dev engine.db
+    os.environ['SCOS_DB_PATH'] = os.path.join(ROOT, 'data', 'engine.db')
+    sys.path.insert(0, old_de)
+    from processor.k1 import compute as k1
+    from processor.daily import compute as daily
+    from processor.risk import compute as risk
+    from processor.kpi import compute as kpi
+    from processor.e2e_kpi import compute_all as e2e
+    old = dict(k1_summary=k1(rows), daily_summary=daily(rows, raw_ship, raw_asn),
+               risks=risk(rows), kpi=kpi(rows), e2e_kpi=e2e(e2e_recs, rows))
+    print('OLD (M1-start, today) done')
+
+    # 新代码（今日运行）
+    new = run_new(rows, e2e_recs, raw_ship, raw_asn)
+    print('NEW (today) done')
+
+    diffs = deep_diff(old, {k: new[k] for k in old})
+    extra = set(new) - set(old)
+    if extra:
+        print(f'  (new keys added — allowed: {sorted(extra)})')
+    if diffs:
+        print(f'\n❌ {len(diffs)} differences found:')
+        for d in diffs[:40]:
+            print('  ' + d)
+        sys.exit(1)
+    print('\n✅ Same-day regression PASSED — old(M1-start) vs new identical on all baseline keys.')
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == '__main__':
     mode = sys.argv[1] if len(sys.argv) > 1 else 'check'
     if mode == 'baseline': cmd_baseline()
     elif mode == 'check': cmd_check()
+    elif mode == 'check-live': cmd_check_live()
     elif mode == 'golden': cmd_golden()
     else:
         print(__doc__)
