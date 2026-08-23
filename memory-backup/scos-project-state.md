@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-18T16:48:55.827Z
+  modified: 2026-08-23T14:52:58.133Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -24,16 +24,21 @@ metadata:
 
 ## 开发路线（严格串行：拆层 → Service Layer → Tools → Config → AI）
 
-- ✅ **M1 拆层（2026-08-19 完成，v1.1-dev，⏳ 未上线待确认）**：
+- ✅ **M1 拆层（2026-08-19，v1.1-dev，⏳ 未上线）**：
   - business-engine/ 独立（engine.py + config/kpi_config.json + kpi/{kpi,e2e_kpi}.py + rules/risk.py + summary/{k1,daily}.py）
   - data-engine/processor 只剩 merge.py；scheduler 纯编排；git tag M1-start 可回滚
-  - 回归：old vs new 100% 一致（baseline.json 在 850-scos-dev/regression/，10.7MB）
   - 已知 v1.0 既有现象（非 M1 引入）：K1 shipped+unshipped 与 total 差 3（超发截断）；本周无 CTO P1 出货时 KPI weekly 缺本周桶
-  - 上线方式：确认后把 business-engine/ 和改动文件复制回 850-scos（需重启线上 Portal）
-- ⏭️ Phase 2：Service Layer 标准化（/api/k1 /api/e2e /api/risk /api/nack）
-- ⏭️ Phase 3-4：ASN Checker / ST Validator / Excel Generator
+- ✅ **Phase 2 Service Layer（2026-08-23，v1.2-dev，⏳ 未上线）**：
+  - 标准端点 /api/k1 /api/daily /api/kpi /api/e2e /api/risk /api/risk-summary /api/nack；?meta=1 数据溯源
+  - 审计发现：cto-analysis.html JS 重算 CTO P1 段耗时（与 risk R6 重复）→ 后续改为服务端 /api/cto-analysis
+- ✅ **Phase 3 ASN Checker（2026-08-23，v1.3-dev，⏳ 未上线）**：
+  - business-engine/rules/asn.py：NACK>HOLD>PASS/PARTIAL/PENDING/OPEN 校验；engine.run 新增 asn_check（加法式）
+  - /api/asn?asn=X；tools.html（ASN Tab 可用）；index 加 Tools 入口
+  - **回归方法升级**：regression_test.py 新增 check-live 模式——从 git M1-start 提取旧代码同日对比（baseline.json 跨天会时间漂移，勿用跨天 check）
+- ⏭️ Phase 4：ST Validator + Excel Generator（tools.html 补 Tab）
 - ⏭️ Phase 5：Config Rule Engine（risk 阈值/kpi 28H/UNCLEAN_HOLDS 配置化；merge 的 status_label/cto_p1 也在此阶段）
 - ⏭️ Phase 6-7：AI Engine + AI Assistant（只调 Service Layer API）
+- 上线方式（待确认）：把 dev 的 business-engine/ + 改动文件复制回 850-scos，重启线上 Portal，VERSION.md 升 v1.3，打标签
 
 ## 备份
 
