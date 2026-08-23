@@ -25,6 +25,15 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.2-dev（2026-08-23）— Phase 2 Service Layer 标准化（在 v1.1-dev 之上）
+
+- 新增标准端点：`/api/k1` `/api/daily` `/api/kpi` `/api/e2e` `/api/risk` `/api/risk-summary` `/api/nack`
+- 所有摘要端点支持 `?meta=1` → `{key, computed_at, data}`（数据溯源，为 AI Engine 备）
+- `/api/nack`：复用订单查询固定 ack_status=REJECT（零业务逻辑）
+- 旧端点（/api/cache/*、/api/k1-summary、/api/sort-data 等）全部保留，逐字节一致（_test_endpoints.py 全绿）
+- 审计发现（待后续阶段修）：cto-analysis.html 在 JS 里重算 CTO P1 段耗时规则（与 Business Engine risk R6 重复），应改为调 /api/cto-analysis
+- ⏳ 未上线——随 v1.1-dev 一起等待确认
+
 ## v1.1-dev（2026-08-19）— M1 拆层完成，待验证后上线
 
 - Business Engine（Layer 2）独立：`business-engine/`（engine.py + config/ + kpi/ + rules/ + summary/）

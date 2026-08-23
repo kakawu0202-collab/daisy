@@ -98,9 +98,25 @@ class Handler(SimpleHTTPRequestHandler):
                 self._logout()
             elif p == '/api/health':
                 self._health()
-            elif p == '/api/k1-summary':     # compat: old dashboard
+            # Phase 2 — standardized Service Layer endpoints（Portal/AI 唯一业务入口）
+            elif p == '/api/k1':
                 self._serve_cache('k1_summary')
-            elif p == '/api/daily-summary':  # compat: old dashboard
+            elif p == '/api/daily':
+                self._serve_cache('daily_summary')
+            elif p == '/api/kpi':
+                self._serve_cache('kpi')
+            elif p == '/api/e2e':
+                self._serve_cache('e2e_kpi')
+            elif p == '/api/risk':
+                self._serve_cache('risks')
+            elif p == '/api/risk-summary':
+                self._serve_cache('risk_summary')
+            elif p == '/api/nack':
+                self._query_nack()
+            # compat: old dashboard endpoints
+            elif p == '/api/k1-summary':
+                self._serve_cache('k1_summary')
+            elif p == '/api/daily-summary':
                 self._serve_cache('daily_summary')
             elif p == '/api/sort-data':      # compat: old dashboard drill-down
                 self._query_orders()
@@ -146,20 +162,25 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.1-dev'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.2-dev'})
 
     def _serve_cache(self, key):
         conn = _db()
-        row = conn.execute('SELECT data FROM cache WHERE key=?', (key,)).fetchone()
+        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (key,)).fetchone()
         conn.close()
-        if row:
+        if not row:
+            self._json({'error': f'No cache for {key}'}, 404)
+            return
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if qs.get('meta', [''])[0] == '1':
+            # Phase 2: data provenance for AI Engine — 数据来源 + 更新时间
+            self._json({'key': key, 'computed_at': row['computed_at'], 'data': json.loads(row['data'])})
+        else:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(row['data'].encode('utf-8'))
-        else:
-            self._json({'error': f'No cache for {key}'}, 404)
 
     def _query_orders(self):
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
@@ -217,6 +238,13 @@ class Handler(SimpleHTTPRequestHandler):
                 if old_k in r: mr[new_k] = r[old_k]
             mapped.append(mr)
         self._json({'records': mapped, 'total': len(mapped)})
+
+    def _query_nack(self):
+        """NACK 订单查询 — 复用 _query_orders 的过滤/映射，固定 ack_status=REJECT。零业务逻辑。"""
+        parsed = urllib.parse.urlparse(self.path)
+        extra = parsed.query
+        self.path = parsed.path + '?ack_status=REJECT' + (('&' + extra) if extra else '')
+        self._query_orders()
 
     def _sync(self):
         sys.path.insert(0, RECEIVER)
