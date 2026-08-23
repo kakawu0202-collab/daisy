@@ -43,11 +43,11 @@ def compute(records, raw_asn=None, raw_ship=None):
         d['scac'] = d['scac'] or str(s.get('SCAC', '')).strip()
         d['ship_qty'] += s.get('SHIP_QTY', 0) or 0
 
-    # 按 ASN 聚合 records
+    # 按 ASN 聚合 records（asn 可能为 None——视为无 ASN，跳过）
     groups = {}
     for r in records:
-        aid = str(r.get('asn', '')).strip()
-        if not aid:
+        aid = str(r.get('asn') or '').strip()
+        if not aid or aid.lower() == 'none':
             continue
         groups.setdefault(aid, []).append(r)
 
