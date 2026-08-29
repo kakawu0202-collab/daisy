@@ -6,6 +6,7 @@ metadata:
   type: reference
   updated: 2026-08-02
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
+  modified: 2026-08-29T15:32:22.093Z
 ---
 
 # 850 SCOS — 业务规则
@@ -47,6 +48,14 @@ metadata:
 | PO NACK | 仅记录，不特殊分析 |
 | ASN NACK | 直接提醒 |
 | SN NACK | 直接提醒 |
+
+---
+
+## 二点五、MSBD 统计口径
+
+- **MSBD 出货卡片/plan 不统计 CTO P1**：CTO P1 单独走 28H 时效管控（PO_RECEIVE + 28H）
+- 对应代码：k1.py msbd_plan 只遍历 `others`（非 CTO P1）
+- 卡片 planned/actual 为"非 CTO P1"口径；全部明细含 CTO P1 时数字会更大
 
 ---
 
