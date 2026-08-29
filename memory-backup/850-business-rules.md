@@ -6,7 +6,7 @@ metadata:
   type: reference
   updated: 2026-08-02
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-29T15:32:22.093Z
+  modified: 2026-08-29T15:45:03.725Z
 ---
 
 # 850 SCOS — 业务规则
@@ -56,6 +56,16 @@ metadata:
 - **MSBD 出货卡片/plan 不统计 CTO P1**：CTO P1 单独走 28H 时效管控（PO_RECEIVE + 28H）
 - 对应代码：k1.py msbd_plan 只遍历 `others`（非 CTO P1）
 - 卡片 planned/actual 为"非 CTO P1"口径；全部明细含 CTO P1 时数字会更大
+
+### 当日 ASN/SN 卡片口径（K1 日报 Tab）
+
+- **范围**：OMS 原始 RPT_ASN_Status 报告，`SHIP_DATE = 当日`（VN 时区自然日，非 5am 窗口）的 ASN
+- **计数单位**：ASN 个数（不是 pcs 件数），每个 ASN 计 1
+- **总数** = N + S（当日出货 ASN 个数）
+- **N / S**：按 SN_STATUS 分别计数——S、SN ACK → S；其余（含 NONE）→ N
+- **ACK / NACK**：按 ASN_STATUS 分别计数（含 'ACK' / 含 'NACK'；两字段独立非互斥）
+- 对应代码：daily.py `_compute_asn()`；卡片显示 N/S/ACK/NACK 四项
+- 注意：raw ASN 数据只在公司侧 Engine 有，dev 重算缓存时 asn/sn 为空是正常的
 
 ---
 
