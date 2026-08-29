@@ -219,7 +219,7 @@ h+='<tr><td><b>RTL</b></td>'+labels.map(function(l){return'<td class="n">'+fmt(r
 h+='<tr><td><b>CTO P2</b></td>'+labels.map(function(l){return'<td class="n">'+fmt(p1[l.toLowerCase()])+'</td>'}).join('')+'<td class="n"><b>'+fmt(pSum)+'</b></td></tr>';
 h+='<tr style="border-top:2px solid var(--b2);"><td><b>合计</b></td>'+labels.map(function(l){return'<td class="n"><b>'+fmt((c1[l.toLowerCase()]||0)+(f1[l.toLowerCase()]||0)+(r1[l.toLowerCase()]||0)+(p1[l.toLowerCase()]||0))+'</b></td>'}).join('')+'<td class="n"><b>'+fmt(ctSum+fSum+rSum+pSum)+'</b></td></tr>';
 h+='</table></div><div class="cht"><canvas id="c-gpp"></canvas></div></div></div>';
-h+='<div class="grid2"><div class="card"><h3>出货计划 · MSBD</h3><div class="chart-wrap"><canvas id="c-msbd"></canvas></div></div><div class="card"><h3>⚡ CTO P1 · 28H 出货计划</h3><div class="chart-wrap"><canvas id="c-cto"></canvas></div></div></div>';
+h+='<div class="grid2"><div class="card"><h3>出货计划 · MSBD <span style="font-size:9px;color:var(--muted);font-weight:400;">非 CTO P1 口径（CTO P1 走 28H 卡片）</span></h3><div class="chart-wrap"><canvas id="c-msbd"></canvas></div></div><div class="card"><h3>⚡ CTO P1 · 28H 出货计划</h3><div class="chart-wrap"><canvas id="c-cto"></canvas></div></div></div>';
 h+='<div class="grid2"><div class="card"><h3>📈 Ship Trend (30d)</h3><div class="chart-wrap" style="height:220px;"><canvas id="c-ship-trend"></canvas></div></div><div class="card"><h3>📥 Order Trend (30d)</h3><div class="chart-wrap" style="height:220px;"><canvas id="c-order-trend"></canvas></div></div></div>';
 document.getElementById('main').innerHTML=h;
 setTimeout(addClickHandlers,400);
@@ -304,7 +304,7 @@ h+='<div class="card"><h3>货代分布</h3><div style="height:180px;position:rel
 h+='</div>';
 // MSBD + CTO P1
 var pm=d.plan_msbd||{},pc=d.plan_cto28h||{};
-h+='<div class="grid2"><div class="card"><h3>📦 MSBD 今日 ('+pm.count+'条/'+fmt(pm.qty||0)+'pcs)</h3><div style="height:150px;"><canvas id="c-daily-msbd"></canvas></div></div>';
+h+='<div class="grid2"><div class="card"><h3>📦 MSBD 今日 ('+pm.count+'条/'+fmt(pm.qty||0)+'pcs) <span style="font-size:9px;color:var(--muted);font-weight:400;">非 CTO P1 口径</span></h3><div style="height:150px;"><canvas id="c-daily-msbd"></canvas></div></div>';
 h+='<div class="card"><h3>⚡ CTO P1 28H 到期 ('+pc.count+'条/'+fmt(pc.qty||0)+'pcs)</h3><div style="height:150px;"><canvas id="c-daily-cto"></canvas></div></div></div>';
 document.getElementById('daily-view').innerHTML=h;
 // Charts
