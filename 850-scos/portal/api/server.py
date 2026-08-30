@@ -9,6 +9,7 @@ PORT = 5050
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DASHBOARD = os.path.join(ROOT, 'dashboard')
 RECEIVER = os.path.join(ROOT, 'receiver')
+sys.path.insert(0, ROOT)  # portal/rules/ 卡片规则模块
 # DB paths — all inside 850-scos/data/, configurable via env vars
 USER_DB = os.environ.get('SCOS_USER_DB') or os.path.join(ROOT, '..', 'data', 'users.db')
 PORTAL_DB = os.environ.get('SCOS_PORTAL_DB') or os.path.join(ROOT, '..', 'data', 'portal.db')
@@ -30,7 +31,7 @@ RECEIVER_SCHEMA = '''
 CREATE TABLE IF NOT EXISTS orders (
     po TEXT NOT NULL, po_line TEXT NOT NULL DEFAULT '1',
     region TEXT, sub_type TEXT, priority TEXT, cto_p1 TEXT,
-    mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT,
+    mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT, cust TEXT,
     po_qty INTEGER DEFAULT 0, remain_qty INTEGER DEFAULT 0, ship_qty INTEGER DEFAULT 0,
     msbd TEXT, psd TEXT, final_msbd TEXT, po_received TEXT,
     status TEXT, ack_status TEXT, is_hold TEXT, hold_code TEXT, status_label TEXT,
@@ -57,6 +58,8 @@ def _db():
     try: conn.execute('ALTER TABLE orders ADD COLUMN shipped_qty INTEGER DEFAULT 0')
     except sqlite3.OperationalError: pass
     try: conn.execute('ALTER TABLE orders ADD COLUMN asn_pending INTEGER DEFAULT 0')
+    except sqlite3.OperationalError: pass
+    try: conn.execute('ALTER TABLE orders ADD COLUMN cust TEXT')
     except sqlite3.OperationalError: pass
     conn.commit()
     return conn
@@ -106,6 +109,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._query_orders()
             elif p == '/api/shipped-history':  # compat
                 self._query_orders()
+            elif p == '/api/cto-asn-missing':
+                self._cto_asn_missing()
             elif p.startswith('/api/cache/'):
                 key = p.split('/')[-1]
                 self._serve_cache(key)
@@ -146,7 +151,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0.1'})
 
     def _serve_cache(self, key):
         conn = _db()
@@ -165,7 +170,7 @@ class Handler(SimpleHTTPRequestHandler):
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         conn = _db()
         sql, params = 'SELECT * FROM orders WHERE 1=1', []
-        for f in ('region','sub_type','ack_status','ship_mode','scac','mcid','cto_p1','priority','is_hold'):
+        for f in ('region','sub_type','ack_status','ship_mode','scac','mcid','cto_p1','priority','is_hold','cust'):
             v = (qs.get(f, [''])[0]).strip()
             if v: sql += f' AND {f}=?'; params.append(v)
         shipped = qs.get('shipped', [''])[0]
@@ -201,7 +206,7 @@ class Handler(SimpleHTTPRequestHandler):
         # Map to UPPERCASE for old dashboard compatibility
         col_map = {'po':'PO','po_line':'PO_LINE','region':'REGION','sub_type':'SUB_TYPE',
             'priority':'PRIORITY','cto_p1':'CTO_P1','mcid':'MCID','ship_mode':'SHIP_MODE',
-            'scac':'SCAC','master_type':'MASTER_TYPE','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
+            'scac':'SCAC','master_type':'MASTER_TYPE','cust':'CUST','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
             'ship_qty':'SHIP_QTY','msbd':'MSBD','psd':'PSD','final_msbd':'FINAL_MSBD',
             'po_received':'PO_RECEIVE_DATE','status':'STATUS','ack_status':'ACK_STATUS',
             'is_hold':'IS_HOLD','hold_code':'HOLD_CODE','status_label':'STATUS_LABEL',
@@ -217,6 +222,14 @@ class Handler(SimpleHTTPRequestHandler):
                 if old_k in r: mr[new_k] = r[old_k]
             mapped.append(mr)
         self._json({'records': mapped, 'total': len(mapped)})
+
+    def _cto_asn_missing(self):
+        """CTO P1 已入库未开 ASN 提醒 — 规则在 portal/rules/cto_asn.py，从 portal.db orders 实时计算。"""
+        from rules.cto_asn import compute
+        conn = _db()
+        rows = [dict(r) for r in conn.execute('SELECT * FROM orders').fetchall()]
+        conn.close()
+        self._json(compute(rows))
 
     def _sync(self):
         sys.path.insert(0, RECEIVER)
