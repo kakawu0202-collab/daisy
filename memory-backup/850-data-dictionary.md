@@ -6,6 +6,7 @@ metadata:
   type: reference
   updated: 2026-08-02
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
+  modified: 2026-08-30T08:21:23.592Z
 ---
 
 # 850 PO 数据字典
@@ -26,7 +27,12 @@ metadata:
 | 值 | 含义 |
 |----|------|
 | DAISY | Dell Newco（新城），当前系统对接的客户 |
+| DAISY 35 | 同 Newco 下的客户细分（850PO 报告实际存在该值） |
 | （其他） | Oldco（旧城）历史客户代码 |
+
+- **850PO（RPT_850_PO）报告中有 CUST 栏位**（2026-08-30 用户确认）
+- SCOS orders 表已贯通该字段（merge.py 映射 CUST/Cust 双键 → orders.cust；/api/orders 支持 cust 过滤）
+- 2026-08-30 起 K1 提醒卡片明细显示 CUST 列
 
 ### 业务背景
 
