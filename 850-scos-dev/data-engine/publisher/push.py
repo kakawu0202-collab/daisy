@@ -19,7 +19,7 @@ YUMIN_REMOTE = 'https://yumin.taila2a2ad.ts.net/sync'
 CHUNK_SIZE = 2000
 
 
-def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None, asn_check=None):
+def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None, asn_check=None, cto_asn_missing=None):
     """Push CHANGED records + all summaries to Yumin.
 
     Args:
@@ -59,6 +59,7 @@ def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None,
         'kpi': kpi,
         'e2e_kpi': e2e_kpi or {},
         'asn_check': asn_check or {},
+        'cto_asn_missing': cto_asn_missing or {},
     }
 
     # ── Push to all targets ────────────────────────────────

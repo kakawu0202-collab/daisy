@@ -162,6 +162,7 @@ td { padding: 5px 6px; border-bottom: 1px solid var(--b2); } tr:hover td { backg
 <script>
 var k1Data=null, drillData=null;
 function fmt(n){return (n||0).toLocaleString();}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function toggleSb(){var s=document.getElementById('sb'),b=document.getElementById('sbt');if(s.classList.contains('open')){s.classList.remove('open');b.classList.remove('open');b.textContent='Filter';}else{s.classList.add('open');b.classList.add('open');b.textContent='Close';}}
 function loadPo(){var v=function(id){var e=document.getElementById(id);return e?e.value:'';},p=[];if(v('f-po-from'))p.push('po_from='+v('f-po-from'));if(v('f-po-to'))p.push('po_to='+v('f-po-to'));load(p);}
 function loadMsbd(){var v=function(id){var e=document.getElementById(id);return e?e.value:'';},p=[];if(v('f-from'))p.push('from='+v('f-from'));if(v('f-to'))p.push('to='+v('f-to'));load(p);}
@@ -246,6 +247,27 @@ window._dailyNewChart=function(){
 	var ds=regs3.map(function(r,i){return{label:r,data:tK.map(function(t){var v=(btr[t]||{})[r]||0;if(v>0)hasData=true;return v}),backgroundColor:['#3b82f6','#22c55e','#f59e0b'][i],borderRadius:2}});
 	if(hasData)new Chart(ctx,{type:'bar',data:{labels:tK,datasets:ds},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{stacked:true,ticks:{color:'#94a3b8',font:{size:8}}},y:{stacked:true,ticks:{color:'#94a3b8',font:{size:8}}}},plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:8},padding:4,boxWidth:10}}}}});
 };
+function toggleCtoAsn(){var d=document.getElementById('cto-asn-detail');if(!d)return;if(d.style.display==='none'){if(!d.innerHTML){loadCtoAsn(true)}d.style.display='block'}else{d.style.display='none'}}
+function loadCtoAsn(force){
+	var c=document.getElementById('cto-asn-count'),q=document.getElementById('cto-asn-qty'),o=document.getElementById('cto-asn-overdue');
+	if(!c)return;
+	fetch('/api/cto-asn-missing').then(function(r){return r.json()}).then(function(d){
+		if(c)c.textContent=d.count||0;if(q)q.textContent=fmt(d.qty||0);if(o)o.textContent=d.overdue||0;
+		if(force)renderCtoAsnDetail(d);
+	}).catch(function(e){if(c)c.textContent='--'});
+}
+function renderCtoAsnDetail(d){
+	var box=document.getElementById('cto-asn-detail');if(!box)return;
+	var items=d.items||[];
+	if(!items.length){box.innerHTML='<div style="padding:14px;color:var(--muted);font-size:12px;">✅ 暂无已入库未开 ASN 的 CTO P1 订单</div>';return;}
+	var h='<table><thead><tr><th>PO</th><th>SO</th><th>MCID</th><th class=n>QTY</th><th>入库时间</th><th>28H目标出货</th><th class=n>已入库时长</th><th>状态</th><th>Hold</th></tr></thead><tbody>';
+	items.forEach(function(i){
+		var passed=i.target_passed?'color:var(--red);font-weight:700;':'';
+		h+='<tr><td>'+esc(i.po)+(i.priority==='1'?' ⚡':'')+'</td><td>'+esc(i.so||'--')+'</td><td>'+esc(i.mcid||'--')+'</td><td class=n>'+fmt(i.po_qty)+'</td><td>'+esc((i.stockin_cdt||'').substring(5,16))+'</td><td style="'+passed+'">'+esc(i.target_28h||'--')+'</td><td class=n>'+(i.hours_since_fg==null?'--':i.hours_since_fg+'H')+'</td><td>'+esc(i.status||'')+'</td><td>'+(i.is_hold==='Y'||i.hold_code?'⚠ '+esc(i.hold_code||'Y'):'')+'</td></tr>';
+	});
+	h+='</tbody></table>';
+	box.innerHTML=h;
+}
 function switchTab(tab){
     document.getElementById('tab-prd').classList.toggle('active',tab==='prd');
     document.getElementById('tab-daily').classList.toggle('active',tab==='daily');
@@ -286,6 +308,9 @@ h+='<div style="background:var(--card);border:1px solid var(--b2);border-radius:
 h+='<div style="background:var(--card);border:1px solid var(--b2);border-radius:10px;padding:16px;text-align:center;border-left:3px solid var(--amber);"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;">SN S</div><div style="font-size:30px;font-weight:800;color:var(--amber);">'+sn.s+'</div><div style="font-size:9px;color:var(--muted);">今日</div></div>';
 h+='<div style="background:var(--card);border:1px solid var(--b2);border-radius:10px;padding:16px;text-align:center;border-left:3px solid var(--accent);"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;">车辆</div><div style="font-size:30px;font-weight:800;color:var(--accent);">'+truck+'</div><div style="font-size:9px;color:var(--muted);">台</div></div>';
 h+='</div>';
+// 🚨 CTO P1 已入库未开 ASN 提醒
+h+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--red);"><h3>🚨 CTO P1 已入库未开 ASN <span style="font-size:9px;color:var(--muted);font-weight:400;">点击查看明细</span></h3><div id="cto-asn-sum" style="display:flex;gap:28px;padding:10px 0;cursor:pointer;" onclick="toggleCtoAsn()"><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-count">--</div><div style="font-size:9px;color:var(--muted);">笔数</div></div><div><div style="font-size:26px;font-weight:800;color:var(--amber);" id="cto-asn-qty">--</div><div style="font-size:9px;color:var(--muted);">数量 pcs</div></div><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-overdue">--</div><div style="font-size:9px;color:var(--muted);">已过28H</div></div></div><div id="cto-asn-detail" style="display:none;margin-top:6px;"></div></div>';
+setTimeout(function(){loadCtoAsn();},300);
 // Type + Region + Forwarder donuts
 var sxr=d.shipped_xreg||{},sxrRows=[];
 ['CTO_P1','FGA','RTL','CTO'].forEach(function(tp){var row=sxr[tp]||{},sum=(row['DAO']||0)+(row['APJ']||0)+(row['EMEA']||0);if(sum>0)sxrRows.push({type:tp,dao:row['DAO']||0,apj:row['APJ']||0,emea:row['EMEA']||0});});

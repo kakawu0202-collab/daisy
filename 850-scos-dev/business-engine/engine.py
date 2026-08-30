@@ -15,6 +15,7 @@ from summary.k1 import compute as k1_compute
 from summary.daily import compute as daily_compute
 from rules.risk import compute as risk_compute
 from rules.asn import compute as asn_compute
+from rules.cto_asn import compute as cto_asn_compute
 from kpi.kpi import compute as kpi_compute
 from kpi.e2e_kpi import compute_all as e2e_kpi_compute
 
@@ -27,6 +28,7 @@ def run(records, raw_ship=None, raw_asn=None, raw_e2e=None):
     kpi = kpi_compute(records)
     e2e_kpi = e2e_kpi_compute(raw_e2e or [], records)
     asn_check = asn_compute(records, raw_asn, raw_ship)
+    cto_asn_missing = cto_asn_compute(records)
     return {
         'k1_summary': k1,
         'daily_summary': daily,
@@ -34,4 +36,5 @@ def run(records, raw_ship=None, raw_asn=None, raw_e2e=None):
         'kpi': kpi,
         'e2e_kpi': e2e_kpi,
         'asn_check': asn_check,
+        'cto_asn_missing': cto_asn_missing,
     }

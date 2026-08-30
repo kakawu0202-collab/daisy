@@ -25,7 +25,16 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
-## v1.3-dev（2026-08-23）— Phase 3 ASN Checker（在 v1.2-dev 之上）
+## v1.3-dev（2026-08-23 起，持续增强中）— Phase 3 ASN Checker + K1 提醒卡片
+
+**2026-08-30 增强**：
+- Business Engine 新增 `rules/cto_asn.py`：CTO P1 已入库（STOCKIN_CDT）未开立 ASN（无 CREATEASN_CDT）未出货清单，每笔附 28H 目标出货时间 + 已入库时长
+- `/api/cto-asn-missing` 端点；K1 日报 Tab 新增 🚨 提醒卡片（笔数/数量/已过28H，点击展开明细表：PO/SO/MCID/QTY/入库时间/28H目标/时长/状态/Hold）
+- MSBD 卡片标注"非 CTO P1 口径"；ASN 卡片补显 NACK
+- 同日回归通过（5 基线键一致，新增键 asn_check/cto_asn_missing）
+
+**2026-08-23**：
+- Business Engine 新增 `rules/asn.py`：按 ASN 聚合 + 业务校验（NACK/HOLD/PASS/PARTIAL/PENDING/OPEN）
 
 - Business Engine 新增 `rules/asn.py`：按 ASN 聚合 + 业务校验（NACK/HOLD/PASS/PARTIAL/PENDING/OPEN）
 - 数据链：engine.run 新增 asn_check 结果 → cache → push → sync（全加法式，旧 5 项不变）

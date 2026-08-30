@@ -115,6 +115,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._query_nack()
             elif p == '/api/asn':
                 self._query_asn()
+            elif p == '/api/cto-asn-missing':
+                self._serve_cache('cto_asn_missing')
             # compat: old dashboard endpoints
             elif p == '/api/k1-summary':
                 self._serve_cache('k1_summary')
