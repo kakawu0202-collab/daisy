@@ -84,7 +84,7 @@ def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw):
             po=po, po_line=str(p.get('PO_LINE','')), region=p.get('REGION'),
             sub_type=sub, priority=pri, cto_p1=cto_p1,
             mcid=p.get('MCID'), ship_mode=p.get('SHIP_MODE'), scac=p.get('SCAC'),
-            master_type=p.get('MASTER_TYPE'),
+            master_type=p.get('MASTER_TYPE'), cust=p.get('CUST') or p.get('Cust') or '',
             po_qty=po_qty, remain_qty=p.get('REMAIN_QTY',0) or 0, ship_qty=p.get('SHIP_QTY',0) or 0,
             msbd=cd(p.get('MSBD')), psd=cd(p.get('PSD')), final_msbd=cd(p.get('FINAL_MSBD')),
             po_received=p.get('PO_RECEIVE_DATE','') if p.get('PO_RECEIVE_DATE') and str(p.get('PO_RECEIVE_DATE','')).strip()[:10] not in ('0001-01-01','1900-01-01') else None,

@@ -260,10 +260,10 @@ function renderCtoAsnDetail(d){
 	var box=document.getElementById('cto-asn-detail');if(!box)return;
 	var items=d.items||[];
 	if(!items.length){box.innerHTML='<div style="padding:14px;color:var(--muted);font-size:12px;">✅ 暂无已入库未开 ASN 的 CTO P1 订单</div>';return;}
-	var h='<table><thead><tr><th>PO</th><th>SO</th><th>MCID</th><th class=n>QTY</th><th>入库时间</th><th>28H目标出货</th><th class=n>已入库时长</th><th>状态</th><th>Hold</th></tr></thead><tbody>';
+	var h='<table><thead><tr><th>PO</th><th>CUST</th><th>SO</th><th>MCID</th><th class=n>QTY</th><th>入库时间</th><th>28H目标出货</th><th class=n>已入库时长</th><th>状态</th><th>Hold</th></tr></thead><tbody>';
 	items.forEach(function(i){
 		var passed=i.target_passed?'color:var(--red);font-weight:700;':'';
-		h+='<tr><td>'+esc(i.po)+(i.priority==='1'?' ⚡':'')+'</td><td>'+esc(i.so||'--')+'</td><td>'+esc(i.mcid||'--')+'</td><td class=n>'+fmt(i.po_qty)+'</td><td>'+esc((i.stockin_cdt||'').substring(5,16))+'</td><td style="'+passed+'">'+esc(i.target_28h||'--')+'</td><td class=n>'+(i.hours_since_fg==null?'--':i.hours_since_fg+'H')+'</td><td>'+esc(i.status||'')+'</td><td>'+(i.is_hold==='Y'||i.hold_code?'⚠ '+esc(i.hold_code||'Y'):'')+'</td></tr>';
+		h+='<tr><td>'+esc(i.po)+(i.priority==='1'?' ⚡':'')+'</td><td>'+esc(i.cust||'--')+'</td><td>'+esc(i.so||'--')+'</td><td>'+esc(i.mcid||'--')+'</td><td class=n>'+fmt(i.po_qty)+'</td><td>'+esc((i.stockin_cdt||'').substring(5,16))+'</td><td style="'+passed+'">'+esc(i.target_28h||'--')+'</td><td class=n>'+(i.hours_since_fg==null?'--':i.hours_since_fg+'H')+'</td><td>'+esc(i.status||'')+'</td><td>'+(i.is_hold==='Y'||i.hold_code?'⚠ '+esc(i.hold_code||'Y'):'')+'</td></tr>';
 	});
 	h+='</tbody></table>';
 	box.innerHTML=h;
