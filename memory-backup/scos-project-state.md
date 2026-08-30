@@ -6,21 +6,24 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-08-23T14:52:58.133Z
+  modified: 2026-08-30T08:50:03.729Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
 
 ## 版本与环境（2026-08-18 起）
 
-- **线上 = `d:\workspace\850-scos`（v1.0.0，代码内版本号 scos-1.0）— 已冻结，不再直接改**
-- **开发 = `d:\workspace\850-scos-dev` — 所有新功能在这里做**
+- **线上 = `d:\workspace\850-scos`（v1.0.1 🔒 卡片版锁定，代码内版本号 scos-1.0.1，2026-08-30）**
+- **开发 = `d:\workspace\850-scos-dev` — 所有新功能在这里做（当前 v1.3-dev 攒着拆层/ServiceLayer/ASN Checker 未上线）**
+- **🔒 上线铁律（用户 2026-08-30 定）：任何线上改动必须经用户逐次明确批准，不得擅自上线**
 - 端口隔离：线上 5050/8700/8900 vs dev 5051/8701/8901（env: SCOS_PORTAL_PORT/SCOS_ENGINE_PORT/SCOS_CONTROL_PORT/YUMIN_URL）
 - dev Engine 推送目标 = http://localhost:5051/sync（本机闭环，绝不推线上）
 - dev 数据 = 线上 2026-08-18 快照副本（data/*.db），改坏可重拷
 - dev 启动：start-dev.bat（Portal 控制台）/ start-dev-silent.vbs（双服务静默）/ start-engine-dev.bat（Engine）
 - **禁忌：dev 机上严禁 taskkill python.exe 全局杀进程（会杀线上 Portal）**
 - 版本规则：dev 验证通过后增量合并回线上并升级版本号（VERSION.md）
+- v1.0.1 上线内容：K1 日报 🚨 已入库未开ASN 卡片（Yumin 侧实时算 portal/rules/cto_asn.py）+ MSBD 口径标注 + ASN NACK + CUST 列
+- **公司电脑待同步（用户手动）**：merge.py + storage/db.py（加 cust）→ `D:\Kaka\2.系统\CC\850-scos`，重启 Engine 后 CUST 才有值
 
 ## 开发路线（严格串行：拆层 → Service Layer → Tools → Config → AI）
 
