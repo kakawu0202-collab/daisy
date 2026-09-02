@@ -256,6 +256,22 @@ function loadCtoAsn(force){
 		if(force)renderCtoAsnDetail(d);
 	}).catch(function(e){if(c)c.textContent='--'});
 }
+function downloadCtoAsn(){
+	fetch('/api/cto-asn-missing').then(function(r){return r.json()}).then(function(d){
+		var head=['PO','CUST','SO','MCID','QTY','入库时间','28H目标出货','已入库时长(H)','状态','Hold'];
+		var lines=[head.join(',')];
+		(d.items||[]).forEach(function(i){
+			var row=[i.po,i.cust||'',i.so||'',i.mcid||'',i.po_qty,(i.stockin_cdt||'').substring(0,16),i.target_28h||'',(i.hours_since_fg==null?'':i.hours_since_fg),i.status||'',(i.is_hold==='Y'||i.hold_code)?(i.hold_code||'Y'):''];
+			lines.push(row.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(','));
+		});
+		var csv='﻿'+lines.join('\r\n');
+		var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+		var a=document.createElement('a');
+		a.href=URL.createObjectURL(blob);
+		a.download='CTO_P1_已入库未开ASN_'+new Date().toISOString().slice(0,10)+'.csv';
+		document.body.appendChild(a);a.click();a.remove();
+	}).catch(function(e){alert('下载失败: '+e.message)});
+}
 function renderCtoAsnDetail(d){
 	var box=document.getElementById('cto-asn-detail');if(!box)return;
 	var items=d.items||[];
@@ -309,7 +325,7 @@ h+='<div style="background:var(--card);border:1px solid var(--b2);border-radius:
 h+='<div style="background:var(--card);border:1px solid var(--b2);border-radius:10px;padding:16px;text-align:center;border-left:3px solid var(--accent);"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;">车辆</div><div style="font-size:30px;font-weight:800;color:var(--accent);">'+truck+'</div><div style="font-size:9px;color:var(--muted);">台</div></div>';
 h+='</div>';
 // 🚨 CTO P1 已入库未开 ASN 提醒
-h+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--red);"><h3>🚨 CTO P1 已入库未开 ASN <span style="font-size:9px;color:var(--muted);font-weight:400;">点击查看明细</span></h3><div id="cto-asn-sum" style="display:flex;gap:28px;padding:10px 0;cursor:pointer;" onclick="toggleCtoAsn()"><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-count">--</div><div style="font-size:9px;color:var(--muted);">笔数</div></div><div><div style="font-size:26px;font-weight:800;color:var(--amber);" id="cto-asn-qty">--</div><div style="font-size:9px;color:var(--muted);">数量 pcs</div></div><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-overdue">--</div><div style="font-size:9px;color:var(--muted);">已过28H</div></div></div><div id="cto-asn-detail" style="display:none;margin-top:6px;"></div></div>';
+h+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--red);"><h3>🚨 CTO P1 已入库未开 ASN <span style="font-size:9px;color:var(--muted);font-weight:400;">点击查看明细</span><button onclick="event.stopPropagation();downloadCtoAsn()" style="float:right;background:var(--card);color:var(--accent);border:1px solid var(--b2);border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;">⬇ 下载 CSV</button></h3><div id="cto-asn-sum" style="display:flex;gap:28px;padding:10px 0;cursor:pointer;" onclick="toggleCtoAsn()"><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-count">--</div><div style="font-size:9px;color:var(--muted);">笔数</div></div><div><div style="font-size:26px;font-weight:800;color:var(--amber);" id="cto-asn-qty">--</div><div style="font-size:9px;color:var(--muted);">数量 pcs</div></div><div><div style="font-size:26px;font-weight:800;color:var(--red);" id="cto-asn-overdue">--</div><div style="font-size:9px;color:var(--muted);">已过28H</div></div></div><div id="cto-asn-detail" style="display:none;margin-top:6px;"></div></div>';
 setTimeout(function(){loadCtoAsn();},300);
 // Type + Region + Forwarder donuts
 var sxr=d.shipped_xreg||{},sxrRows=[];
