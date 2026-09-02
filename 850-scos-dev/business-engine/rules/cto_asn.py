@@ -1,7 +1,7 @@
 """CTO P1 已入库未开 ASN — 提醒清单（Business Engine 规则）。
 
 口径（对应风险规则 R5 第二分支）：
-- cto_p1='Y' AND 有 STOCKIN_CDT（已入库）AND 无 CREATEASN_CDT（未开立 ASN）AND 未出货
+- cto_p1='Y' AND 有 STOCKIN_CDT（已入库）AND 无 CREATEASN_CDT（未开立 ASN）AND 未出货 AND status≠ZC（排除已取消）
 - 每笔附带 28H 目标出货时间（PO_RECEIVE + 28H）与已入库时长
 - 按 28H 目标时间升序（最紧急在前），无 PO_RECEIVE 的排最后
 纯计算、零存储副作用。
@@ -35,6 +35,8 @@ def compute(records):
             continue
         if r.get('actual_shipped'):
             continue
+        if str(r.get('status') or '').strip() == 'ZC':
+            continue  # 已取消订单不提醒
 
         prd = _parse_dt(r.get('po_received'))
         fg = _parse_dt(r.get('stockin_cdt'))
