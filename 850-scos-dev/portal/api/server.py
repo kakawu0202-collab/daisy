@@ -30,7 +30,7 @@ RECEIVER_SCHEMA = '''
 CREATE TABLE IF NOT EXISTS orders (
     po TEXT NOT NULL, po_line TEXT NOT NULL DEFAULT '1',
     region TEXT, sub_type TEXT, priority TEXT, cto_p1 TEXT,
-    mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT, cust TEXT,
+    mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT, cust TEXT, ship_status TEXT,
     po_qty INTEGER DEFAULT 0, remain_qty INTEGER DEFAULT 0, ship_qty INTEGER DEFAULT 0,
     msbd TEXT, psd TEXT, final_msbd TEXT, po_received TEXT,
     status TEXT, ack_status TEXT, is_hold TEXT, hold_code TEXT, status_label TEXT,
@@ -59,6 +59,8 @@ def _db():
     try: conn.execute('ALTER TABLE orders ADD COLUMN asn_pending INTEGER DEFAULT 0')
     except sqlite3.OperationalError: pass
     try: conn.execute('ALTER TABLE orders ADD COLUMN cust TEXT')
+    except sqlite3.OperationalError: pass
+    try: conn.execute('ALTER TABLE orders ADD COLUMN ship_status TEXT')
     except sqlite3.OperationalError: pass
     conn.commit()
     return conn
@@ -117,6 +119,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._query_nack()
             elif p == '/api/asn':
                 self._query_asn()
+            elif p == '/api/st':
+                self._query_st()
             elif p == '/api/cto-asn-missing':
                 self._serve_cache('cto_asn_missing')
             # compat: old dashboard endpoints
@@ -228,7 +232,7 @@ class Handler(SimpleHTTPRequestHandler):
         # Map to UPPERCASE for old dashboard compatibility
         col_map = {'po':'PO','po_line':'PO_LINE','region':'REGION','sub_type':'SUB_TYPE',
             'priority':'PRIORITY','cto_p1':'CTO_P1','mcid':'MCID','ship_mode':'SHIP_MODE',
-            'scac':'SCAC','master_type':'MASTER_TYPE','cust':'CUST','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
+            'scac':'SCAC','master_type':'MASTER_TYPE','cust':'CUST','ship_status':'SHIP_STATUS','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
             'ship_qty':'SHIP_QTY','msbd':'MSBD','psd':'PSD','final_msbd':'FINAL_MSBD',
             'po_received':'PO_RECEIVE_DATE','status':'STATUS','ack_status':'ACK_STATUS',
             'is_hold':'IS_HOLD','hold_code':'HOLD_CODE','status_label':'STATUS_LABEL',
@@ -244,6 +248,33 @@ class Handler(SimpleHTTPRequestHandler):
                 if old_k in r: mr[new_k] = r[old_k]
             mapped.append(mr)
         self._json({'records': mapped, 'total': len(mapped)})
+
+    def _query_st(self):
+        """ST（SHIP_STATUS）校验查询 — 读 st_check 缓存（Business Engine 计算结果）。零业务逻辑。"""
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        po = (qs.get('po', [''])[0]).strip()
+        asn = (qs.get('asn', [''])[0]).strip()
+        if not po and not asn:
+            self._json({'error': 'Missing po or asn param'}, 400)
+            return
+        conn = _db()
+        row = conn.execute("SELECT data, computed_at FROM cache WHERE key='st_check'").fetchone()
+        conn.close()
+        if not row:
+            self._json({'error': 'st_check cache not available', 'computed_at': None}, 404)
+            return
+        data = json.loads(row['data'])
+        entry = None
+        if po:
+            entry = data.get('by_po', {}).get(po)
+        if entry is None and asn:
+            entry = data.get('by_asn', {}).get(asn)
+        if entry is None:
+            self._json({'found': False, 'query': po or asn, 'verdict': 'NOT_FOUND',
+                        'computed_at': row['computed_at'], 'meta': data.get('__meta', {})}, 404)
+            return
+        self._json({'found': True, 'computed_at': row['computed_at'],
+                    'meta': data.get('__meta', {}), 'check': entry})
 
     def _query_nack(self):
         """NACK 订单查询 — 复用 _query_orders 的过滤/映射，固定 ack_status=REJECT。零业务逻辑。"""

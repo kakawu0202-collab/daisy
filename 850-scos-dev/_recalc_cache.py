@@ -10,6 +10,7 @@ from summary.daily import compute as daily_compute
 from rules.risk import compute as risk_compute
 from rules.asn import compute as asn_compute
 from rules.cto_asn import compute as cto_asn_compute
+from rules.st import compute as st_compute
 from kpi.kpi import compute as kpi_compute
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -44,11 +45,13 @@ risks = risk_compute(rows)
 kpi = kpi_compute(rows)
 asn_check = asn_compute(rows)
 cto_asn_missing = cto_asn_compute(rows)
+st_check = st_compute(rows)
 print(f'ASN Check: {asn_check["__meta"]["asn_count"]} ASNs indexed')
 print(f'CTO ASN Missing: {cto_asn_missing["count"]} orders / {cto_asn_missing["qty"]}pcs')
+print(f'ST Check: {st_check["__meta"]["po_count"]} POs indexed')
 
 # Write to engine DB
-for key, data in [('k1_summary', k1), ('daily_summary', daily), ('risks', risks), ('kpi', kpi), ('asn_check', asn_check), ('cto_asn_missing', cto_asn_missing)]:
+for key, data in [('k1_summary', k1), ('daily_summary', daily), ('risks', risks), ('kpi', kpi), ('asn_check', asn_check), ('cto_asn_missing', cto_asn_missing), ('st_check', st_check)]:
     put_cache(conn, key, data)
 conn.close()
 
@@ -57,7 +60,7 @@ portal_db = os.path.join(ROOT, 'data', 'portal.db')
 pconn = sqlite3.connect(portal_db)
 pconn.execute("CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, data TEXT NOT NULL, computed_at TEXT NOT NULL)")
 now = datetime.now().isoformat()
-for key, data in [('k1_summary', k1), ('daily_summary', daily), ('risks', risks), ('kpi', kpi), ('asn_check', asn_check), ('cto_asn_missing', cto_asn_missing)]:
+for key, data in [('k1_summary', k1), ('daily_summary', daily), ('risks', risks), ('kpi', kpi), ('asn_check', asn_check), ('cto_asn_missing', cto_asn_missing), ('st_check', st_check)]:
     pconn.execute('INSERT OR REPLACE INTO cache (key,data,computed_at) VALUES (?,?,?)',
         (key, json.dumps(data, ensure_ascii=False, default=str), now))
 pconn.commit(); pconn.close()

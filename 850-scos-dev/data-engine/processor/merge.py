@@ -48,6 +48,13 @@ def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw):
 
     po_shipped = {}
     ship_set = set()
+    po_ship_status = {}  # PO -> SHIP_STATUS（出货报告，多值去重拼接）
+    for s in ship_d:
+        po = str(s.get('PO','')).strip()
+        if po not in prd_pos: continue
+        ss = str(s.get('SHIP_STATUS') or '').strip()
+        if ss and ss not in po_ship_status.get(po, '').split('/'):
+            po_ship_status[po] = (po_ship_status.get(po, '') + '/' + ss).strip('/')
     for aid, po_ships in asn_po.items():
         total = sum(po_ships.values())
         if total == 0: continue
@@ -85,6 +92,7 @@ def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw):
             sub_type=sub, priority=pri, cto_p1=cto_p1,
             mcid=p.get('MCID'), ship_mode=p.get('SHIP_MODE'), scac=p.get('SCAC'),
             master_type=p.get('MASTER_TYPE'), cust=p.get('CUST') or p.get('Cust') or '',
+            ship_status=po_ship_status.get(po, ''),
             po_qty=po_qty, remain_qty=p.get('REMAIN_QTY',0) or 0, ship_qty=p.get('SHIP_QTY',0) or 0,
             msbd=cd(p.get('MSBD')), psd=cd(p.get('PSD')), final_msbd=cd(p.get('FINAL_MSBD')),
             po_received=p.get('PO_RECEIVE_DATE','') if p.get('PO_RECEIVE_DATE') and str(p.get('PO_RECEIVE_DATE','')).strip()[:10] not in ('0001-01-01','1900-01-01') else None,

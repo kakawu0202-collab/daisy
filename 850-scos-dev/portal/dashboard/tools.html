@@ -30,6 +30,8 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .badge.NACK,.badge.NOT_FOUND{background:rgba(239,68,68,.15);color:var(--r)}
 .badge.HOLD{background:rgba(245,158,11,.15);color:var(--a)}
 .badge.OPEN{background:rgba(148,163,184,.15);color:var(--muted)}
+.badge.WARN{background:rgba(245,158,11,.15);color:var(--a)}
+.badge.ERROR{background:rgba(239,68,68,.15);color:var(--r)}
 .meta{font-size:11px;color:var(--muted);margin-bottom:14px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .sc{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:12px}
@@ -53,7 +55,7 @@ td.n{text-align:right}
 
 <div class="tabs">
   <div class="tab on" onclick="switchTab('asn')">ASN Checker</div>
-  <div class="tab" onclick="switchTab('st')">ST Validator<span class="soon">(Phase 4)</span></div>
+  <div class="tab" onclick="switchTab('st')">ST Validator</div>
   <div class="tab" onclick="switchTab('excel')">Excel Generator<span class="soon">(Phase 4)</span></div>
 </div>
 
@@ -67,7 +69,12 @@ td.n{text-align:right}
 </div>
 
 <div class="panel" id="tab-st" style="display:none">
-  <div class="hint">ST Validator 将于 Phase 4 上线——输入 ST 编号做业务校验。</div>
+  <div class="search">
+    <input type="text" id="st-input" placeholder="输入 PO 或 ASN 编号" onkeydown="if(event.key==='Enter')checkSt()">
+    <button onclick="checkSt()">Check</button>
+  </div>
+  <div class="hint">SHIP_STATUS 出货状态校验（NACK / 数据异常 / 超发 / Hold / 部分出货），规则由 Business Engine 计算，本页只读 /api/st。</div>
+  <div id="st-result"></div>
 </div>
 
 <div class="panel" id="tab-excel" style="display:none">
@@ -76,6 +83,56 @@ td.n{text-align:right}
 
 <script>
 var F=function(n){return(n||0).toLocaleString()}
+
+async function checkSt(){
+  var box=document.getElementById('st-input'),out=document.getElementById('st-result')
+  var v=box.value.trim()
+  if(!v){out.innerHTML='<div class=err>请输入 PO 或 ASN 编号</div>';return}
+  out.innerHTML='<div class=loading>Checking...</div>'
+  try{
+    var r=await fetch('/api/st?po='+encodeURIComponent(v)+'&asn='+encodeURIComponent(v))
+    var d=await r.json()
+    if(!d.found){
+      out.innerHTML='<span class="badge NOT_FOUND">NOT FOUND</span><div class=meta>'+esc(v)+' 在系统数据中不存在'+(d.computed_at?' · 数据更新于 '+A(d.computed_at):'')+'</div>'
+      return
+    }
+    var c=d.check
+    var h='<span class="badge '+c.verdict+'">'+c.verdict+'</span>'
+    h+='<div class=meta>数据更新于 '+A(d.computed_at)+'</div>'
+    if(c.po_count!=null){
+      h+='<div class="grid2">'
+      h+='<div class=sc><div class=l>ASN</div><div class=v>'+esc(c.asn)+'</div></div>'
+      h+='<div class=sc><div class=l>PO 数</div><div class=v>'+F(c.po_count)+'</div></div>'
+      h+='<div class=sc><div class=l>QTY</div><div class=v>'+F(c.po_qty_total)+'</div></div>'
+      h+='<div class=sc><div class=l>已出货</div><div class=v>'+F(c.shipped_total)+'</div></div>'
+      h+='<div class=sc><div class=l>SHIP_STATUS</div><div class=v>'+esc(c.ship_status||'--')+'</div></div>'
+      h+='</div>'
+      if(c.checks&&c.checks.length){h+='<div class=checks>';c.checks.forEach(function(k){h+='<div class="chk '+k.level+'">'+esc(k.detail)+'</div>'});h+='</div>'}
+      h+=stTable(c.pos||[])
+    }else{
+      h+='<div class="grid2">'
+      h+='<div class=sc><div class=l>PO</div><div class=v>'+esc(c.po)+'</div></div>'
+      h+='<div class=sc><div class=l>QTY</div><div class=v>'+F(c.po_qty)+'</div></div>'
+      h+='<div class=sc><div class=l>已出货</div><div class=v>'+F(c.shipped_qty)+'</div></div>'
+      h+='<div class=sc><div class=l>SHIP_STATUS</div><div class=v>'+esc(c.ship_status||'--')+'</div></div>'
+      h+='<div class=sc><div class=l>SN</div><div class=v>'+esc(c.sn_cdt||'--')+'</div></div>'
+      h+='<div class=sc><div class=l>ASN</div><div class=v>'+esc(c.asn||'--')+'</div></div>'
+      h+='</div>'
+      if(c.checks&&c.checks.length){h+='<div class=checks>';c.checks.forEach(function(k){h+='<div class="chk '+k.level+'">'+esc(k.detail)+'</div>'});h+='</div>'}
+    }
+    out.innerHTML=h
+  }catch(e){
+    out.innerHTML='<div class=err>查询失败：'+esc(e.message)+'（st_check 数据未同步？）</div>'
+  }
+}
+function stTable(pos){
+  var h='<table><thead><tr><th>PO</th><th>CUST</th><th>SO</th><th>MCID</th><th class=n>QTY</th><th class=n>Shipped</th><th>状态</th><th>SN</th><th>判定</th></tr></thead><tbody>'
+  pos.forEach(function(p){
+    h+='<tr><td>'+esc(p.po)+(p.cto_p1==='Y'?' ⚡':'')+'</td><td>'+esc(p.cust||'--')+'</td><td>'+esc(p.so||'--')+'</td><td>'+esc(p.mcid||'--')+'</td><td class=n>'+F(p.po_qty)+'</td><td class=n>'+F(p.shipped_qty)+'</td><td>'+esc(p.status||'')+'</td><td>'+esc(p.sn_cdt||'--')+'</td><td>'+esc(p.verdict)+'</td></tr>'
+  })
+  h+='</tbody></table>'
+  return h
+}
 function switchTab(t){
   ['asn','st','excel'].forEach(function(x){
     document.getElementById('tab-'+x).style.display=(x===t)?'block':'none'
