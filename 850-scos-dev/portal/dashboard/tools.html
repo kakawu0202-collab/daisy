@@ -19,6 +19,10 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);pad
 .search{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .search input{flex:1;min-width:200px;padding:10px 14px;background:var(--bg);border:1px solid var(--b2);border-radius:8px;color:var(--text);font-size:13px}
 .search input:focus{outline:none;border-color:var(--accent)}
+.search select{background:var(--bg);border:1px solid var(--b2);border-radius:8px;color:var(--text);padding:9px 10px;font-size:12px}
+.search select:focus{outline:none;border-color:var(--accent)}
+.search input[type=date]{background:var(--bg);border:1px solid var(--b2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;color-scheme:dark}
+.search label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
 .search button{padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
 .search button:hover{opacity:.85}
 .hint{font-size:11px;color:var(--muted);margin-bottom:16px}
@@ -56,7 +60,7 @@ td.n{text-align:right}
 <div class="tabs">
   <div class="tab on" onclick="switchTab('asn')">ASN Checker</div>
   <div class="tab" onclick="switchTab('st')">ST Validator</div>
-  <div class="tab" onclick="switchTab('excel')">Excel Generator<span class="soon">(Phase 4)</span></div>
+  <div class="tab" onclick="switchTab('excel')">Excel Generator</div>
 </div>
 
 <div class="panel" id="tab-asn">
@@ -78,7 +82,24 @@ td.n{text-align:right}
 </div>
 
 <div class="panel" id="tab-excel" style="display:none">
-  <div class="hint">Excel Generator 将于 Phase 4 上线——按过滤条件导出 XLSX。</div>
+  <div class="hint">按过滤条件导出订单数据为 XLSX（Excel 直接打开）。过滤口径与 /api/orders 完全一致，本页零业务逻辑。</div>
+  <div class="search" style="flex-wrap:wrap;gap:8px">
+    <select id="ex-sub"><option value="">类型: 全部</option><option>FGA</option><option>RTL</option><option>CTO</option></select>
+    <select id="ex-region"><option value="">区域: 全部</option><option>DAO</option><option>APJ</option><option>EMEA</option></select>
+    <select id="ex-shipped"><option value="">出货: 全部</option><option value="1">已出货</option><option value="0">未出货</option></select>
+    <select id="ex-ack"><option value="">ACK: 全部</option><option value="REJECT">NACK (REJECT)</option></select>
+    <input type="text" id="ex-cust" placeholder="CUST（如 DAISY）" style="max-width:150px">
+    <input type="date" id="ex-msbd-from" title="MSBD 起">
+    <span style="color:var(--muted)">~</span>
+    <input type="date" id="ex-msbd-to" title="MSBD 止">
+    <label><input type="checkbox" id="ex-cto"> CTO P1</label>
+    <label><input type="checkbox" id="ex-hold"> Hold</label>
+  </div>
+  <div class="search" style="margin-top:10px">
+    <button onclick="exportOrders()">⬇ 下载 XLSX</button>
+    <button onclick="countOrders()" style="background:var(--card);border:1px solid var(--b2);color:var(--text)">查条数</button>
+  </div>
+  <div id="ex-result" class="hint" style="margin-top:10px"></div>
 </div>
 
 <script>
@@ -124,6 +145,31 @@ async function checkSt(){
   }catch(e){
     out.innerHTML='<div class=err>查询失败：'+esc(e.message)+'（st_check 数据未同步？）</div>'
   }
+}
+function excelParams(){
+  var p=[],g=function(id){var e=document.getElementById(id);return e?e.value.trim():''};
+  if(g('ex-sub'))p.push('sub_type='+encodeURIComponent(g('ex-sub')));
+  if(g('ex-region'))p.push('region='+encodeURIComponent(g('ex-region')));
+  if(g('ex-shipped'))p.push('shipped='+g('ex-shipped'));
+  if(g('ex-ack'))p.push('ack_status='+encodeURIComponent(g('ex-ack')));
+  if(g('ex-cust'))p.push('cust='+encodeURIComponent(g('ex-cust')));
+  if(g('ex-msbd-from'))p.push('msbd_from='+g('ex-msbd-from'));
+  if(g('ex-msbd-to'))p.push('msbd_to='+g('ex-msbd-to'));
+  var c=document.getElementById('ex-cto');if(c&&c.checked)p.push('cto_p1=Y');
+  var h=document.getElementById('ex-hold');if(h&&h.checked)p.push('is_hold=Y');
+  return p.join('&');
+}
+function exportOrders(){
+  var q=excelParams(),box=document.getElementById('ex-result');
+  window.open('/api/export/orders'+(q?'?'+q:''),'_blank');
+  box.innerHTML='已触发下载（新窗口）。条件: '+(q||'无（全部订单）');
+}
+function countOrders(){
+  var q=excelParams(),box=document.getElementById('ex-result');
+  box.innerHTML='查询中...';
+  fetch('/api/orders?limit=1'+(q?'&'+q:'')).then(function(r){return r.json()}).then(function(d){
+    box.innerHTML='共 <b>'+F(d.total)+'</b> 条匹配（导出将包含全部）';
+  }).catch(function(e){box.innerHTML='查询失败: '+e.message});
 }
 function stTable(pos){
   var h='<table><thead><tr><th>PO</th><th>CUST</th><th>SO</th><th>MCID</th><th class=n>QTY</th><th class=n>Shipped</th><th>状态</th><th>SN</th><th>判定</th></tr></thead><tbody>'

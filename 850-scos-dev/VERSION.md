@@ -25,6 +25,18 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.4-dev（2026-09-03）— Phase 4 ST Validator + Excel Generator（在 v1.3-dev 之上）
+
+- **ST Validator**（SHIP_STATUS 出货状态校验）：rules/st.py 按 PO/ASN 校验
+  （NACK/已出货无SN/有量未标记/超发/Hold/部分出货 → NACK>ERROR>WARN>PARTIAL>OPEN>PASS）
+  /api/st?po=X&asn=X；tools.html ST Tab；ship_status 字段贯通管线（公司侧同步后有原始值）
+- **Excel Generator**：/api/export/orders（openpyxl XLSX，表头样式+冻结首行+列宽）
+  过滤与 /api/orders 完全同源（抽取 _build_orders_sql 共用），新增 msbd_from/msbd_to 范围过滤
+  tools.html Excel Tab：类型/区域/出货/ACK/CUST/MSBD范围/CTO P1/Hold + 下载 + 查条数
+- 修复：st.py 过滤 asn='None' 假 ASN（OMS 空值字符串坑）
+- dev 数据已同步线上最新（8711 条）
+- 同日回归通过（5 基线键一致）
+
 ## v1.3-dev（2026-08-23 起，持续增强中）— Phase 3 ASN Checker + K1 提醒卡片
 
 **2026-08-30 增强**：

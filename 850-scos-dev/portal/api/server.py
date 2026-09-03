@@ -139,6 +139,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._admin_users()
             elif p == '/api/orders':
                 self._query_orders()
+            elif p == '/api/export/orders':
+                self._export_orders()
             elif p in ('/sw.js', '/manifest.json'):
                 self._serve_static(p)
             else:
@@ -172,7 +174,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.3-dev'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.4-dev'})
 
     def _serve_cache(self, key):
         conn = _db()
@@ -192,9 +194,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(row['data'].encode('utf-8'))
 
-    def _query_orders(self):
-        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        conn = _db()
+    def _build_orders_sql(self, qs):
+        """过滤条件构建 — /api/orders 与 /api/export/orders 共用同一套逻辑。"""
         sql, params = 'SELECT * FROM orders WHERE 1=1', []
         for f in ('region','sub_type','ack_status','ship_mode','scac','mcid','cto_p1','priority','is_hold','cust'):
             v = (qs.get(f, [''])[0]).strip()
@@ -210,6 +211,11 @@ class Handler(SimpleHTTPRequestHandler):
             v = (qs.get(df, [''])[0]).strip()
             if v and df == 'po_from': sql += f' AND {col} >= ?'; params.append(v)
             elif v and df == 'po_to': sql += f' AND {col} <= ?'; params.append(v)
+        # MSBD range filter (Excel Generator)
+        for df, col in [('msbd_from','msbd'),('msbd_to','msbd')]:
+            v = (qs.get(df, [''])[0]).strip()
+            if v and df == 'msbd_from': sql += f' AND {col} >= ?'; params.append(v)
+            elif v and df == 'msbd_to': sql += f' AND {col} <= ?'; params.append(v)
         # GPP status filter
         gpp = (qs.get('gpp', [''])[0]).strip().upper()
         if gpp in ('STBL','ATB','WIP','FG','SN'):
@@ -227,27 +233,75 @@ class Handler(SimpleHTTPRequestHandler):
             except: pass
         limit = qs.get('limit', [''])[0]
         if limit: sql += ' LIMIT ?'; params.append(min(int(limit), 50000))
+        return sql, params
+
+    COL_MAP = {'po':'PO','po_line':'PO_LINE','region':'REGION','sub_type':'SUB_TYPE',
+        'priority':'PRIORITY','cto_p1':'CTO_P1','mcid':'MCID','ship_mode':'SHIP_MODE',
+        'scac':'SCAC','master_type':'MASTER_TYPE','cust':'CUST','ship_status':'SHIP_STATUS','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
+        'ship_qty':'SHIP_QTY','msbd':'MSBD','psd':'PSD','final_msbd':'FINAL_MSBD',
+        'po_received':'PO_RECEIVE_DATE','status':'STATUS','ack_status':'ACK_STATUS',
+        'is_hold':'IS_HOLD','hold_code':'HOLD_CODE','status_label':'STATUS_LABEL',
+        'asn':'ASN','hawb':'HAWB','dpn':'DPN','ipn':'IPN','dell_so':'DELL_SO',
+        'ship_to_country':'SHIP_TO_COUNTRY','description':'DESCRIPTION',
+        'input_cdt':'INPUT_CDT','stockin_cdt':'STOCKIN_CDT','sn_cdt':'SN_CDT',
+        'createasn_cdt':'CREATEASN_CDT','stbl':'STBL','atb':'ATB','wip':'WIP','fg':'FG','sn':'SN',
+        'actual_shipped':'ACTUAL_SHIPPED','shipped_qty':'SHIPPED_QTY'}
+
+    def _map_order_row(self, r):
+        return {new_k: r[old_k] for old_k, new_k in self.COL_MAP.items() if old_k in r}
+
+    def _query_orders(self):
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        conn = _db()
+        sql, params = self._build_orders_sql(qs)
         rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
         conn.close()
-        # Map to UPPERCASE for old dashboard compatibility
-        col_map = {'po':'PO','po_line':'PO_LINE','region':'REGION','sub_type':'SUB_TYPE',
-            'priority':'PRIORITY','cto_p1':'CTO_P1','mcid':'MCID','ship_mode':'SHIP_MODE',
-            'scac':'SCAC','master_type':'MASTER_TYPE','cust':'CUST','ship_status':'SHIP_STATUS','po_qty':'PO_QTY','remain_qty':'REMAIN_QTY',
-            'ship_qty':'SHIP_QTY','msbd':'MSBD','psd':'PSD','final_msbd':'FINAL_MSBD',
-            'po_received':'PO_RECEIVE_DATE','status':'STATUS','ack_status':'ACK_STATUS',
-            'is_hold':'IS_HOLD','hold_code':'HOLD_CODE','status_label':'STATUS_LABEL',
-            'asn':'ASN','hawb':'HAWB','dpn':'DPN','ipn':'IPN','dell_so':'DELL_SO',
-            'ship_to_country':'SHIP_TO_COUNTRY','description':'DESCRIPTION',
-            'input_cdt':'INPUT_CDT','stockin_cdt':'STOCKIN_CDT','sn_cdt':'SN_CDT',
-            'createasn_cdt':'CREATEASN_CDT','stbl':'STBL','atb':'ATB','wip':'WIP','fg':'FG','sn':'SN',
-            'actual_shipped':'ACTUAL_SHIPPED','shipped_qty':'SHIPPED_QTY'}
-        mapped = []
-        for r in rows:
-            mr = {}
-            for old_k, new_k in col_map.items():
-                if old_k in r: mr[new_k] = r[old_k]
-            mapped.append(mr)
+        mapped = [self._map_order_row(r) for r in rows]
         self._json({'records': mapped, 'total': len(mapped)})
+
+    def _export_orders(self):
+        """Excel Generator — 过滤 → openpyxl → XLSX 下载。零业务逻辑（纯数据导出）。"""
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        conn = _db()
+        sql, params = self._build_orders_sql(qs)
+        rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
+        conn.close()
+        mapped = [self._map_order_row(r) for r in rows]
+
+        import io as _io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'orders'
+        if mapped:
+            headers = list(mapped[0].keys())
+            ws.append(headers)
+            hfont = Font(bold=True, color='FFFFFF')
+            hfill = PatternFill('solid', fgColor='3B82F6')
+            for c in ws[1]:
+                c.font = hfont
+                c.fill = hfill
+            for m in mapped:
+                ws.append([m.get(h, '') for h in headers])
+            ws.freeze_panes = 'A2'
+            for i, h in enumerate(headers, 1):
+                ws.column_dimensions[get_column_letter(i)].width = max(10, min(32, len(str(h)) + 2))
+        else:
+            ws.append(['PO'])
+
+        buf = _io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        fname = f'850_orders_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        self.send_header('Content-Disposition', f'attachment; filename="{fname}"')
+        self.send_header('Content-Length', str(len(buf.getvalue())))
+        self.end_headers()
+        self.wfile.write(buf.getvalue())
 
     def _query_st(self):
         """ST（SHIP_STATUS）校验查询 — 读 st_check 缓存（Business Engine 计算结果）。零业务逻辑。"""
