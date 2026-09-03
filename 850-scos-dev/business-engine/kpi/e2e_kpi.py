@@ -7,13 +7,16 @@ import json, os
 from datetime import datetime, timedelta
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'kpi_config.json')
-# Hold codes that mark a PO as "unclean" (had hold history)
-UNCLEAN_HOLDS = {'A01','A02','A03','A04','A05','A06','A07','A09','A11','A12','A13','A14',
-                 'A21','A22','A23','A24','A27','A32','A35','D01','D04','D05'}
+RULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'rules.json')
 
 def load_config():
     with open(CONFIG_PATH, 'r') as f:
         return json.load(f)
+
+def load_unclean_holds():
+    """Hold codes that mark a PO as "unclean" (had hold history) — from rules.json。"""
+    with open(RULES_PATH) as f:
+        return set(json.load(f)['e2e']['unclean_holds'])
 
 def dell_week(dt):
     if isinstance(dt, str):
@@ -57,16 +60,17 @@ def hours_between(start, end):
     if not a or not b or b < a: return None
     return round((b - a).total_seconds() / 3600, 2)
 
-def _has_hold(po, merged_map):
+def _has_hold(po, merged_map, unclean_holds):
     """Check if a PO has unclean hold history."""
     r = merged_map.get(po)
     if not r: return False
     hc = str(r.get('hold_code', '') or '').strip().upper()
     ih = str(r.get('is_hold', '') or '').strip().upper()
-    return hc in UNCLEAN_HOLDS or ih == 'Y'
+    return hc in unclean_holds or ih == 'Y'
 
 def compute_all(e2e_records, merged_records=None):
     config = load_config()
+    unclean_holds = load_unclean_holds()
     merged = merged_records or []
     merged_map = {str(r.get('po','')).strip(): r for r in merged}
 
@@ -76,7 +80,7 @@ def compute_all(e2e_records, merged_records=None):
     for r in e2e_records:
         if r.get('SN_CDT') and parse_dt(r.get('SN_CDT')):
             po = str(r.get('PO','')).strip()
-            r['_clean'] = not _has_hold(po, merged_map)
+            r['_clean'] = not _has_hold(po, merged_map, unclean_holds)
             shipped_all.append(r)
             if str(r.get('PO_STATUS','')).strip().upper() == 'CLOSE':
                 completed.append(r)

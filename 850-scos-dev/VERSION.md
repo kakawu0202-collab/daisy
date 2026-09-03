@@ -25,6 +25,14 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.5-dev（2026-09-04）— Phase 5 Config Rule Engine（P5-1~4，在 v1.4-dev 之上）
+
+- 新增 `business-engine/config/rules.json`：risk 阈值（28H/2天/1H/各段 target+over_warn）、
+  KPI（28H SLA + 75/90 目标线）、E2E UNCLEAN_HOLDS 代码表——全部可改配置不动代码
+- risk.py / kpi.py / e2e_kpi.py 改读 rules.json（默认值 = v1.0 硬编码值）
+- 同日回归：8711 条最新数据下 5 基线键 100% 一致 → 默认配置行为零变化
+- ⏭️ P5-5 待确认：merge.py 的 status_label/cto_p1 判定配置化（跨层，Data Engine 侧）
+
 ## v1.4-dev（2026-09-03）— Phase 4 ST Validator + Excel Generator（在 v1.3-dev 之上）
 
 - **ST Validator**（SHIP_STATUS 出货状态校验）：rules/st.py 按 PO/ASN 校验

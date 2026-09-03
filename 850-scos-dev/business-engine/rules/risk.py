@@ -1,9 +1,19 @@
-"""Risk engine — implements R1-R7 business rules. Runs on Data Engine, results cached."""
+"""Risk engine — implements R1-R7 business rules. Runs on Data Engine, results cached.
+规则阈值来自 config/rules.json（默认值 = v1.0 硬编码值，行为不变）。"""
+import os, json
 from datetime import datetime, timedelta, timezone
+
+RULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'rules.json')
+
+def _risk_cfg():
+    with open(RULES_PATH) as f:
+        return json.load(f)['risk']
 
 def compute(records):
     """Generate risk/warning items from merged records.
     Returns list of risk dicts, each with: {type, severity, po, detail, qty}"""
+    cfg = _risk_cfg()
+    r6 = cfg['r6']
     vn_tz = timezone(timedelta(hours=7))
     now = datetime.now(vn_tz).replace(tzinfo=None)
     today = now.date()
@@ -26,7 +36,7 @@ def compute(records):
                 try: dt = datetime.strptime(r['po_received'][:10], '%Y-%m-%d')
                 except: dt = None
             if dt:
-                due = dt + timedelta(hours=28)
+                due = dt + timedelta(hours=cfg['cto_28h_hours'])
                 if due < now and not r['actual_shipped']:
                     risks.append({'type': 'CTO_P1_28H_MISS', 'severity': 'high', 'po': po,
                         'detail': f'28H deadline {due.strftime("%m/%d %H:%M")}', 'qty': r['po_qty']})
@@ -42,8 +52,8 @@ def compute(records):
             risks.append({'type': 'STBL_ABNORMAL', 'severity': 'mid', 'po': po,
                 'detail': f'STBL {r["stbl"]} pcs', 'qty': qty})
 
-        # R4: ATB + MSBD within 2 days → warning
-        if r['atb'] > 0 and msbd_date and msbd_date <= today + timedelta(days=2) and not r['actual_shipped']:
+        # R4: ATB + MSBD within N days → warning
+        if r['atb'] > 0 and msbd_date and msbd_date <= today + timedelta(days=cfg['r4_msbd_warn_days']) and not r['actual_shipped']:
             risks.append({'type': 'ATB_MSBD_WARN', 'severity': 'mid', 'po': po,
                 'detail': f'ATB {r["atb"]} pcs, MSBD {msbd[:10]}', 'qty': r['atb']})
 
@@ -52,14 +62,14 @@ def compute(records):
             try:
                 fg_dt = datetime.strptime(r['stockin_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 asn_dt = datetime.strptime(r['createasn_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
-                if (asn_dt - fg_dt).total_seconds() > 3600:
+                if (asn_dt - fg_dt).total_seconds() > cfg['r5_asn_after_fg_hours'] * 3600:
                     risks.append({'type': 'CTO_ASN_DELAY', 'severity': 'mid', 'po': po,
                         'detail': f'ASN {round((asn_dt-fg_dt).total_seconds()/3600,1)}H after FG', 'qty': r['po_qty']})
             except: pass
         elif cto and r['stockin_cdt'] and not r['createasn_cdt'] and not r['actual_shipped']:
             try:
                 fg_dt = datetime.strptime(r['stockin_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
-                if now - fg_dt > timedelta(hours=1):
+                if now - fg_dt > timedelta(hours=cfg['r5_asn_after_fg_hours']):
                     risks.append({'type': 'CTO_ASN_MISSING', 'severity': 'high', 'po': po,
                         'detail': f'{(now-fg_dt).total_seconds()/3600:.1f}H since FG, no ASN', 'qty': r['po_qty']})
             except: pass
@@ -70,24 +80,24 @@ def compute(records):
                 prd = datetime.strptime(r['po_received'][:19], '%Y-%m-%dT%H:%M:%S')
                 inp = datetime.strptime(r['input_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 h = (inp - prd).total_seconds() / 3600
-                if h > 12: risks.append({'type': 'PLANNING_OVER', 'severity': 'mid', 'po': po,
-                    'detail': f'Planning {round(h,1)}H (target <=11H)', 'qty': r['po_qty']})
+                if h > r6['planning']['over_warn']: risks.append({'type': 'PLANNING_OVER', 'severity': 'mid', 'po': po,
+                    'detail': f'Planning {round(h,1)}H (target <={r6["planning"]["target"]}H)', 'qty': r['po_qty']})
             except: pass
         if cto and r['input_cdt'] and r['stockin_cdt']:
             try:
                 inp = datetime.strptime(r['input_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 stk = datetime.strptime(r['stockin_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 h = (stk - inp).total_seconds() / 3600
-                if h > 13: risks.append({'type': 'BUILD_OVER', 'severity': 'mid', 'po': po,
-                    'detail': f'Build {round(h,1)}H (target <=12H)', 'qty': r['po_qty']})
+                if h > r6['build']['over_warn']: risks.append({'type': 'BUILD_OVER', 'severity': 'mid', 'po': po,
+                    'detail': f'Build {round(h,1)}H (target <={r6["build"]["target"]}H)', 'qty': r['po_qty']})
             except: pass
         if cto and r['stockin_cdt'] and r['sn_cdt']:
             try:
                 stk = datetime.strptime(r['stockin_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 sn_dt = datetime.strptime(r['sn_cdt'][:19], '%Y-%m-%dT%H:%M:%S')
                 h = (sn_dt - stk).total_seconds() / 3600
-                if h > 6: risks.append({'type': 'SHUTTLE_OVER', 'severity': 'mid', 'po': po,
-                    'detail': f'Shuttle {round(h,1)}H (target <=5H)', 'qty': r['po_qty']})
+                if h > r6['shuttle']['over_warn']: risks.append({'type': 'SHUTTLE_OVER', 'severity': 'mid', 'po': po,
+                    'detail': f'Shuttle {round(h,1)}H (target <={r6["shuttle"]["target"]}H)', 'qty': r['po_qty']})
             except: pass
 
     return risks

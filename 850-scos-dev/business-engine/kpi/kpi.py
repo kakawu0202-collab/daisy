@@ -1,9 +1,15 @@
-"""CTO P1 28H KPI — daily/weekly statistics. Week = Saturday to Friday."""
+"""CTO P1 28H KPI — daily/weekly statistics. Week = Saturday to Friday.
+SLA 与目标线来自 config/rules.json（默认值 = v1.0 硬编码值，行为不变）。"""
+import os, json
 from datetime import datetime, timedelta, timezone
+
+RULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'rules.json')
 
 def compute(records):
     """Compute CTO P1 28H KPI for daily and weekly windows.
     Returns {daily: {date: {total, ok, pct}}, weekly: {week_start: {total, ok, pct, orders}}}"""
+    with open(RULES_PATH) as f:
+        kcfg = json.load(f)['kpi']
     vn_tz = timezone(timedelta(hours=7))
     now = datetime.now(vn_tz)
 
@@ -23,7 +29,7 @@ def compute(records):
             except: continue
 
         hours = (sn_dt - prd).total_seconds() / 3600
-        ok = hours <= 28
+        ok = hours <= kcfg['cto_28h_hours']
         ship_date = sn_dt.date()
 
         # Daily
@@ -53,8 +59,8 @@ def compute(records):
         'weekly': {k: weekly[k] for k in sorted(weekly.keys())[-8:]},
         'this_week': this_week,
         'this_week_start': this_week,
-        'target_75': tw['pct'] >= 75,
-        'target_90': tw['pct'] >= 90,
+        'target_75': tw['pct'] >= kcfg['target_75'],
+        'target_90': tw['pct'] >= kcfg['target_90'],
     }
 
 

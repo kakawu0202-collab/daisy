@@ -1,0 +1,25 @@
+{
+  "risk": {
+    "cto_28h_hours": 28,
+    "r4_msbd_warn_days": 2,
+    "r5_asn_after_fg_hours": 1,
+    "r6": {
+      "planning": {"target": 11, "over_warn": 12},
+      "build": {"target": 12, "over_warn": 13},
+      "shuttle": {"target": 5, "over_warn": 6},
+      "ss_asn": {"target": 1, "over_warn": 2}
+    }
+  },
+  "kpi": {
+    "cto_28h_hours": 28,
+    "target_75": 75,
+    "target_90": 90
+  },
+  "e2e": {
+    "unclean_holds": [
+      "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A09", "A11", "A12",
+      "A13", "A14", "A21", "A22", "A23", "A24", "A27", "A32", "A35",
+      "D01", "D04", "D05"
+    ]
+  }
+}
