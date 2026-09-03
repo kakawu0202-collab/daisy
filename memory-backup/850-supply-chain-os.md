@@ -4,8 +4,9 @@ description: 850 Supply Chain OS 完整架构蓝图 — 五层系统：Data Engi
 metadata: 
   node_type: memory
   type: project
-  updated: 2026-08-01
+  updated: 2026-09-03
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
+  modified: 2026-09-03T15:50:41.190Z
 ---
 
 # 850 Supply Chain OS — 架构蓝图
@@ -151,28 +152,21 @@ OMS → Collector → SQLite → Processor → Business Engine
 
 ## 当前项目文件
 
+2026-09-03 核实：实际开发已合并为单一目录 **850-scos-dev/**（git 已跟踪）：
+
 ```
-d:\workspace\
-├── 850-data-engine\          ← Data Engine（已构建）
-│   ├── collector/
-│   ├── processor/            ← 需要拆分：清洗归Data，规则归Business
-│   ├── storage/
-│   ├── publisher/
-│   └── scheduler.py
-│
-├── 850-ai-portal\            ← Portal + Service Layer（已构建）
-│   ├── receiver/
-│   ├── api/
-│   └── dashboard/
-│
-├── 850-toolbox\              ← 旧系统（过渡期保留）
-│
-└── 850-business-engine\      ← 【待构建】
-    ├── kpi/
-    ├── risk/
-    ├── rules/
-    └── validation/
+d:\workspace\850-scos-dev\
+├── data-engine\          ← collector/processor/storage/publisher/scheduler
+├── business-engine\      ← engine.py + rules/（st.py ST校验器等）
+└── portal\
+    ├── api\server.py     ← Service Layer
+    ├── receiver\sync.py  ← 接收推送
+    └── dashboard\        ← 【yumin 展示网页】index/k1/cto-kpi/tools/status/admin 等
 ```
+
+- 旧目录 850-data-engine\、850-ai-portal\、850-toolbox\yumin-static 是 08-01 之前的副本，勿再改
+- 850-scos-company-sync\ 只是公司电脑 CUST 字段同步补丁包，非网页
+- 版本线：v1.0.1 卡片版 → v1.0.2 上线锁定（卡片排除ZC+CSV下载）→ v1.3-dev（CTO ASN 提醒 + Phase 4 ST Validator）
 
 ## 关联记忆
 

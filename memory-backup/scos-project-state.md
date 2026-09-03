@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-02T08:28:58.717Z
+  modified: 2026-09-03T15:51:22.606Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -39,10 +39,14 @@ metadata:
   - business-engine/rules/asn.py：NACK>HOLD>PASS/PARTIAL/PENDING/OPEN 校验；engine.run 新增 asn_check（加法式）
   - /api/asn?asn=X；tools.html（ASN Tab 可用）；index 加 Tools 入口
   - **回归方法升级**：regression_test.py 新增 check-live 模式——从 git M1-start 提取旧代码同日对比（baseline.json 跨天会时间漂移，勿用跨天 check）
-- ⏭️ Phase 4：ST Validator + Excel Generator（tools.html 补 Tab）
+- ✅ **Phase 4（2026-09-03，v1.4-dev，⏳ 未上线）**：
+  - ST Validator = SHIP_STATUS 出货状态校验（用户拍板口径）：rules/st.py 按 PO/ASN → NACK>ERROR>WARN>PARTIAL>OPEN>PASS；/api/st；tools.html ST Tab
+  - Excel Generator：/api/export/orders（openpyxl XLSX）；过滤抽取 _build_orders_sql 与 /api/orders 同源；新增 msbd_from/msbd_to
+  - ship_status 字段贯通（同 cust 模式，公司侧同步后才有原始值）；修 asn='None' 假 ASN 坑
+  - **dev 数据已刷成线上最新快照（8711 条）**；注意：_recalc_cache.py 读 dev engine.db 会覆盖 portal 缓存，刷新后别跑 recalc，用 portal.db 源重算 dev 专属缓存
 - ⏭️ Phase 5：Config Rule Engine（risk 阈值/kpi 28H/UNCLEAN_HOLDS 配置化；merge 的 status_label/cto_p1 也在此阶段）
 - ⏭️ Phase 6-7：AI Engine + AI Assistant（只调 Service Layer API）
-- 上线方式（待确认）：把 dev 的 business-engine/ + 改动文件复制回 850-scos，重启线上 Portal，VERSION.md 升 v1.3，打标签
+- 上线方式（待确认）：把 dev 的 business-engine/ + 改动文件复制回 850-scos，重启线上 Portal，VERSION.md 升版本，打标签；**每次上线需用户逐次点头**
 
 ## 备份
 
