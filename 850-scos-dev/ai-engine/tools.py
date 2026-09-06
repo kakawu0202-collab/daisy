@@ -60,6 +60,18 @@ TOOLS = [
     {
         'type': 'function',
         'function': {
+            'name': 'get_backlog_distribution',
+            'description': 'Backlog（未出货）订单分布——问"Backlog/未出货的分布（按区域/类型）"必须用这个工具，'
+                           '不要用 get_k1_summary 自己找字段。返回单位 pcs(件)。'
+                           '返回结构：by_type={类型:{qty:件数, regions:{DAO/APJ/EMEA:件数}}}、'
+                           'by_region={区域:件数}、total_unshipped=未出货总件数。'
+                           '若用户要"笔数/单数"，需要再调 query_orders(shipped=0) 看 total 条数。',
+            'parameters': {'type': 'object', 'properties': {}},
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
             'name': 'get_daily_summary',
             'description': '日报摘要：今日新收订单（VN 5:00-5:00 窗口）、今日出货、ASN（N/S/ACK/NACK 计数）、'
                            'SN S、车辆数、30 日趋势、今日 MSBD/CTO 28H 计划。',
@@ -149,6 +161,23 @@ def execute(name, args):
     if name == 'get_k1_summary':
         d = _get('/api/k1', META)
         return d['data'], d.get('computed_at', '')
+    if name == 'get_backlog_distribution':
+        d = _get('/api/k1', META)
+        k1 = d['data']
+        bx = k1.get('backlog_xreg', {}) or {}
+        by_type = {}
+        region_totals = {}
+        for t, regions in bx.items():
+            tsum = sum(regions.values())
+            by_type[t] = {'qty': tsum, 'regions': dict(regions)}
+            for r, v in regions.items():
+                region_totals[r] = region_totals.get(r, 0) + v
+        return {
+            'unit': 'pcs(件)',
+            'by_type': by_type,
+            'by_region': region_totals,
+            'total_unshipped': k1.get('unshipped'),
+        }, d.get('computed_at', '')
     if name == 'get_daily_summary':
         d = _get('/api/daily', META)
         return d['data'], d.get('computed_at', '')
