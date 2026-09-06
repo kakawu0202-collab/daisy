@@ -25,6 +25,14 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.7-dev（2026-09-06）— Phase 7 AI Assistant Portal（在 v1.6-dev 之上）
+
+- 新增 ai-engine/web.py：http://localhost:5099 网页聊天（POST /api/ask → agent）
+- 聊天页沿用 dashboard 深色风格；首页 Quick Links 加 AI Assistant 入口
+- start-ai.bat 一键启动（自动开浏览器）
+- 安全边界记录：AI 代跑 ask.py 被 exfiltration 策略硬拦截；用户浏览器直问不受影响；
+  路线 B（授权代跑）需用户自行在 settings.local.json 加权限规则
+
 ## v1.6-dev（2026-09-06）— Phase 6 AI Engine v0（在 v1.5-dev 之上）
 
 - 新增 `ai-engine/`（config/llm/tools/agent/ask）：
