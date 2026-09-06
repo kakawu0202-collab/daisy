@@ -45,32 +45,32 @@ header h1{font-size:16px}header .t{font-size:11px;color:var(--muted)}
   <div class="msg ai"><div class="bubble">你好！我是 850 SCOS 数据助手，可以问我：
 例如「目前有多少笔 NACK 订单？」「CTO P1 未出货的订单有多少？」「查 ASN LUXBVN000000158 的出货状态」「风险最高的 PO 是哪些」<span class="src">数据来自 SCOS Service Layer</span></div></div>
 </div>
-<div class="hint" id="fresh"></div>
-<form id="inputbar" onsubmit="return send()">
-  <input id="q" placeholder="输入你的问题，回车发送…" autocomplete="off">
-  <button id="send" type="submit">发送</button>
-</form>
+<div class="hint" id="fresh">回答需 10-60 秒（模型查询+生成），请耐心等待</div>
+<div id="inputbar">
+  <input id="q" placeholder="输入你的问题，回车发送…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();doSend();}">
+  <button id="send" type="button" onclick="doSend()">发送</button>
+</div>
 <script>
 var chat=document.getElementById('chat'),q=document.getElementById('q'),sendBtn=document.getElementById('send');
+window.onerror=function(m){try{var d=document.createElement('div');d.className='msg ai';d.innerHTML='<div class="bubble">⚠️ JS错误：'+m+'</div>';chat.appendChild(d);}catch(e){}return false;};
 function addMsg(who,text){
   var d=document.createElement('div');d.className='msg '+who;
   var b=document.createElement('div');b.className='bubble';b.textContent=text;
-  d.appendChild(b);chat.appendChild(d);chat.scrollTop=chat.scrollHeight;
+  d.appendChild(b);chat.appendChild(d);b.scrollIntoView({block:'end'});
 }
-async function send(){
-  var t=q.value.trim();if(!t||sendBtn.disabled)return false;
+function doSend(){
+  var t=q.value.trim();
+  if(!t){q.focus();q.style.borderColor='#ef4444';setTimeout(function(){q.style.borderColor=''},1200);return;}
+  if(sendBtn.disabled)return;
+  q.style.borderColor='';
   addMsg('user',t);q.value='';sendBtn.disabled=true;
   var ai=document.createElement('div');ai.className='msg ai';
-  var ab=document.createElement('div');ab.className='bubble';ab.textContent='思考中…';ai.appendChild(ab);chat.appendChild(ai);chat.scrollTop=chat.scrollHeight;
-  try{
-    var r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:t})});
-    var d=await r.json();
-    ab.textContent=d.answer||'(空回答)';
-  }catch(e){
-    ab.textContent='⚠️ 调用失败：'+e.message;
-  }
-  sendBtn.disabled=false;chat.scrollTop=chat.scrollHeight;q.focus();
-  return false;
+  var ab=document.createElement('div');ab.className='bubble';ab.textContent='思考中…';ai.appendChild(ab);chat.appendChild(ai);ab.scrollIntoView({block:'end'});
+  fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:t})})
+    .then(function(r){return r.json()})
+    .then(function(d){ab.textContent=d.answer||'(空回答)';ab.scrollIntoView({block:'end'});})
+    .catch(function(e){ab.textContent='⚠️ 调用失败：'+e.message;})
+    .finally(function(){sendBtn.disabled=false;q.focus();});
 }
 </script>
 </body>
