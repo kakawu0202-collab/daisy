@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-03T15:51:22.606Z
+  modified: 2026-09-06T15:29:15.324Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -45,7 +45,13 @@ metadata:
   - ship_status 字段贯通（同 cust 模式，公司侧同步后才有原始值）；修 asn='None' 假 ASN 坑
   - **dev 数据已刷成线上最新快照（8711 条）**；注意：_recalc_cache.py 读 dev engine.db 会覆盖 portal 缓存，刷新后别跑 recalc，用 portal.db 源重算 dev 专属缓存
 - ⏭️ Phase 5：Config Rule Engine（risk 阈值/kpi 28H/UNCLEAN_HOLDS 配置化；merge 的 status_label/cto_p1 也在此阶段）
-- ⏭️ Phase 6-7：AI Engine + AI Assistant（只调 Service Layer API）
+- ✅ **Phase 6 AI Engine v0（2026-09-06，v1.6-dev，⏳ 未上线）**：
+  - ai-engine/{config,llm,tools,agent,ask}.py——NL → function calling → Service Layer（10 工具）→ 中文答案 + computed_at 溯源
+  - 防编造加固：未调工具的回答拦截 + 首轮强制重查 + --debug 追踪；明细工具默认 limit=50
+  - **LLM 凭据：用户已配置智谱 GLM-4-Flash（免费）**，在 ai-engine/.env（AI_API_KEY/AI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/AI_MODEL=glm-4-flash）；.env 已 gitignore，勿提交勿打印
+  - **安全拦截**：Claude 代跑 ask.py 会被 exfiltration 策略拦截（订单数据→外部 LLM）——用户自己在终端跑（路线 A）或加可信域名权限（路线 B）
+  - 实测跑通：get_daily_summary 工具调用正常；注意 daily 缓存 nack_count 与实时 /api/nack 可能差少量（快照时差）
+- ⏭️ Phase 7：AI Assistant 挂 Portal 页面（ai.html 聊天框，浏览器直接问）
 - 上线方式（待确认）：把 dev 的 business-engine/ + 改动文件复制回 850-scos，重启线上 Portal，VERSION.md 升版本，打标签；**每次上线需用户逐次点头**
 
 ## 备份
