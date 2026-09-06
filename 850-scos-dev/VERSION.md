@@ -25,6 +25,16 @@
 - `data/` 为线上 2026-08-18 快照副本（engine.db / portal.db / users.db），改坏不影响线上
 - 本目录代码改动不触碰线上 `850-scos` 与公司电脑部署
 
+## v1.6-dev（2026-09-06）— Phase 6 AI Engine v0（在 v1.5-dev 之上）
+
+- 新增 `ai-engine/`（config/llm/tools/agent/ask）：
+  - **唯一数据入口 = Service Layer**（10 个工具全部映射 API，禁止直连数据库）
+  - 自然语言 → function calling → 中文答案 + 「数据更新时间」（computed_at 溯源）
+  - 凭据：AI_* 环境变量优先，回退 SenseNova SN_*（与 sn-ppt 同约定）；ai-engine/.env 或环境变量填入
+  - 用法：`python ask.py "RTL 本周 NACK 多少单？"` 或交互模式
+- 工具链路验证：10/10 与 Service Layer 连通（含 computed_at）
+- 待用户提供 LLM key 后即可跑通首个问答
+
 ## v1.5-dev（2026-09-04）— Phase 5 Config Rule Engine（P5-1~4，在 v1.4-dev 之上）
 
 - 新增 `business-engine/config/rules.json`：risk 阈值（28H/2天/1H/各段 target+over_warn）、
