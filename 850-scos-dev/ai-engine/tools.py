@@ -44,8 +44,16 @@ TOOLS = [
         'type': 'function',
         'function': {
             'name': 'get_k1_summary',
-            'description': 'K1 看板总览：总订单/已出货/Backlog、各类型(FGA/RTL/CTO P1/CTO P2)数量与出货、'
-                           '区域分布、GPP 生产状态、MSBD 出货计划（不含 CTO P1）、CTO P1 28H 计划。',
+            'description': 'K1 看板总览。重要：所有数量单位是件数(pcs)，不是笔数；笔数必须用 query_orders 统计 total。'
+                           '字段语义（务必按需取用，勿混）：'
+                           'total_qty/shipped/unshipped=全部订单总量/已出货/未出货(件)；'
+                           'backlog_xreg=未出货订单按类型×区域(DAO/APJ/EMEA)的件数矩阵——问"Backlog/未出货分布"用这个；'
+                           'cross_region=全部订单类型×区域矩阵；shipped_xreg=已出货类型×区域矩阵；'
+                           'region_cnt=仅CTO P1的区域件数分布(不是全部订单)；'
+                           'type_cnt=各类型全量件数(含已出货，不是Backlog)；'
+                           'cto_p1_qty/fga_qty/rtl_qty/cto_p2_qty 及对应 shipped/unshipped=各类型的全量/已出货/未出货件数；'
+                           'cto_p1_gpp/others_gpp/fga_gpp/rtl_gpp=GPP生产状态件数；'
+                           'msbd_plan=MSBD出货计划(非CTO P1)；cto_timeline=CTO P1 28H计划。',
             'parameters': {'type': 'object', 'properties': {}},
         },
     },
