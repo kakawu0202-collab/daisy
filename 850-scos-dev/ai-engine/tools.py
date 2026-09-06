@@ -129,8 +129,14 @@ TOOLS = [
 def execute(name, args):
     """执行工具 → Service Layer。返回 (payload, computed_at)。"""
     if name == 'query_orders':
+        args = dict(args)
+        if 'limit' not in args:
+            args['limit'] = '50'  # 默认截断，防止把全表灌给 LLM；总数用汇总工具
         return _get('/api/orders', args), _freshness()
     if name == 'get_nack_orders':
+        args = dict(args)
+        if 'limit' not in args:
+            args['limit'] = '50'
         return _get('/api/nack', args), _freshness()
     if name == 'get_k1_summary':
         d = _get('/api/k1', META)

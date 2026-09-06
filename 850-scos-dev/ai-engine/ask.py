@@ -10,10 +10,10 @@ import sys
 from agent import ask
 
 
-def _print_answer(q):
+def _print_answer(q, debug=False):
     print(f'❓ {q}\n')
     try:
-        print(ask(q))
+        print(ask(q, debug=debug))
     except RuntimeError as e:
         print(f'⚠️ {e}')
     except Exception as e:
@@ -21,8 +21,10 @@ def _print_answer(q):
 
 
 def main():
-    if len(sys.argv) > 1:
-        _print_answer(' '.join(sys.argv[1:]))
+    debug = '--debug' in sys.argv
+    args = [a for a in sys.argv[1:] if a != '--debug']
+    if args:
+        _print_answer(' '.join(args), debug=debug)
         return
     print('850 SCOS · AI 问数据（输入 quit 退出）')
     while True:
@@ -35,7 +37,7 @@ def main():
         if q.lower() == 'quit':
             break
         print()
-        _print_answer(q)
+        _print_answer(q, debug=debug)
 
 
 if __name__ == '__main__':
