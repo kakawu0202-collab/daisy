@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-06T15:29:15.324Z
+  modified: 2026-09-06T15:42:20.925Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -51,7 +51,11 @@ metadata:
   - **LLM 凭据：用户已配置智谱 GLM-4-Flash（免费）**，在 ai-engine/.env（AI_API_KEY/AI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/AI_MODEL=glm-4-flash）；.env 已 gitignore，勿提交勿打印
   - **安全拦截**：Claude 代跑 ask.py 会被 exfiltration 策略拦截（订单数据→外部 LLM）——用户自己在终端跑（路线 A）或加可信域名权限（路线 B）
   - 实测跑通：get_daily_summary 工具调用正常；注意 daily 缓存 nack_count 与实时 /api/nack 可能差少量（快照时差）
-- ⏭️ Phase 7：AI Assistant 挂 Portal 页面（ai.html 聊天框，浏览器直接问）
+- ✅ **Phase 7 AI Assistant Portal（2026-09-06，v1.7-dev，⏳ 未上线）**：
+  - ai-engine/web.py（localhost:5099 聊天页 + /api/ask）+ start-ai.bat + 首页 Quick Links 入口
+  - **安全边界（重要）**：AI 自改权限被 HARD 拦截（不允许自开数据外发通道）；路线 B 需用户亲手在 settings.local.json 的 allow 数组加 `PowerShell(cd d:\workspace\850-scos-dev\ai-engine; python ask.py *)` 等规则
+  - 用户浏览器直问（5099）不受任何拦截——推荐主用方式
+  - 蓝图 Phase 0-7 全部完成（测试版）；线上仍 v1.0.2 锁定，全量上线待用户点头
 - 上线方式（待确认）：把 dev 的 business-engine/ + 改动文件复制回 850-scos，重启线上 Portal，VERSION.md 升版本，打标签；**每次上线需用户逐次点头**
 
 ## 备份
