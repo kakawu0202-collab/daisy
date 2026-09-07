@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-06T15:42:20.925Z
+  modified: 2026-09-07T16:23:27.526Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -166,6 +166,15 @@ OMS → Collector → Processor → SQLite → 增量推送(分块+确认) → �
 5. **多进程端口冲突**：曾出现 3 个进程挤 5050，重启前先 netstat 检查
 6. **OMS 超时**：公司网络推送大包会超时，已改分块 2000
 7. **RTL 无 GPP 数据**：RTL 不走产线（直发零售），生产状态全 0 是正常
+
+## SWAN 项目（⏸️ 2026-09-08 用户暂停开发）
+
+- 需求：为 SWAN（独立 OMS 环境的客户项目）做 SCOS 支持，看板切换式（DAISY/SWAN）
+- **已完成地基（v1.7-dev 内，commit fd4d5cb）**：
+  - orders 表 project 列（默认 DAISY 零迁移）+ 服务端 scos_project cookie 路由（缓存 SWAN:key 命名空间 + 订单过滤）
+  - 全站右上角 DAISY/SWAN 切换器；merge.py 支持 project 参数；scheduler.run_swan 骨架（OMS_SWAN_URL 门控）
+- **待用户提供后继续**：① SWAN OMS 环境地址/账号/报告ID；② SWAN 业务规则差异（28H/类型口径/风险规则/Hold 表）——"有差异，后续详说"
+- 恢复方法：直接在 850-scos-dev 继续填充 run_swan + 规则即可，无冲突
 
 ## 关联记忆
 
