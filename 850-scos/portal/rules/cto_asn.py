@@ -44,6 +44,7 @@ def compute(records):
         items.append({
             'po': r.get('po'), 'po_line': r.get('po_line', '1'),
             'cust': r.get('cust') or '', 'so': r.get('dell_so') or '', 'mcid': r.get('mcid') or '',
+            'asn': str(r.get('asn') or ''),
             'dpn': r.get('dpn') or '', 'ipn': r.get('ipn') or '',
             'region': r.get('region') or '', 'priority': r.get('priority') or '',
             'po_qty': r.get('po_qty', 0) or 0,

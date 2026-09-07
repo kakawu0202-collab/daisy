@@ -54,6 +54,8 @@ def compute(records):
             msbd_plan.setdefault(ds, {'planned':0,'actual':0,'date':ds,'incomplete':False})
             msbd_plan[ds]['planned'] += r['po_qty']
             if r['actual_shipped']: msbd_plan[ds]['actual'] += min(r['shipped_qty'], r['po_qty'])
+            elif str(r.get('status') or '').strip().upper() == 'CLOSE':
+                msbd_plan[ds]['actual'] += r['po_qty']  # CLOSE 视为计划达成（2026-09-08 口径）
     for k in msbd_plan:
         p = msbd_plan[k]
         try:
