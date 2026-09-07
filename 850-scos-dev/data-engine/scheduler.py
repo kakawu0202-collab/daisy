@@ -66,6 +66,21 @@ def run(account='31000161', password=None):
     return records, push_summary
 
 
+def run_swan(account=None, password=None):
+    """SWAN 项目 pipeline — 独立 OMS 环境（规则与 DAISY 有差异，待定义后填充）。
+
+    骨架：未配置 OMS_SWAN_URL 时优雅跳过；配置后走 独立拉数 → merge(project='SWAN')
+    → Business Engine → 缓存 key 加 'SWAN:' 前缀 → 推送。
+    """
+    swan_url = os.environ.get('OMS_SWAN_URL', '')
+    if not swan_url:
+        print('[SWAN] 未配置 OMS_SWAN_URL（独立环境地址），本轮跳过')
+        return None, None
+    # TODO(SWAN): 待用户提供 SWAN OMS 环境地址/账号/报告ID 后实现拉数与规则差异
+    print(f'[SWAN] 环境已配置（{swan_url}），拉数与规则待实现')
+    return None, None
+
+
 class DailyProcessor:
     """Placeholder for daily_summary module — implemented inline for now."""
     pass

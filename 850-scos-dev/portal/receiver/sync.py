@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS orders (
     po TEXT NOT NULL, po_line TEXT NOT NULL DEFAULT '1',
     region TEXT, sub_type TEXT, priority TEXT, cto_p1 TEXT,
     mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT, cust TEXT, ship_status TEXT,
+    project TEXT DEFAULT 'DAISY',
     po_qty INTEGER DEFAULT 0, remain_qty INTEGER DEFAULT 0, ship_qty INTEGER DEFAULT 0,
     msbd TEXT, psd TEXT, final_msbd TEXT, po_received TEXT,
     status TEXT, ack_status TEXT, is_hold TEXT, hold_code TEXT, status_label TEXT,
@@ -43,11 +44,13 @@ def _db():
     except sqlite3.OperationalError: pass
     try: conn.execute('ALTER TABLE orders ADD COLUMN ship_status TEXT')
     except sqlite3.OperationalError: pass
+    try: conn.execute('ALTER TABLE orders ADD COLUMN project TEXT DEFAULT \'DAISY\'')
+    except sqlite3.OperationalError: pass
     conn.commit()
     return conn
 
 FIELDS = ['po','po_line','region','sub_type','priority','cto_p1','mcid','ship_mode','scac',
-    'master_type','cust','ship_status','po_qty','remain_qty','ship_qty','msbd','psd','final_msbd','po_received',
+    'master_type','cust','ship_status','project','po_qty','remain_qty','ship_qty','msbd','psd','final_msbd','po_received',
     'status','ack_status','is_hold','hold_code','status_label','asn','hawb','dpn','ipn','dell_so',
     'ship_to_country','description','input_cdt','stockin_cdt','sn_cdt','createasn_cdt',
     'stbl','atb','wip','fg','sn','actual_shipped','shipped_qty','asn_pending','updated_at','hash']

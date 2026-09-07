@@ -3,7 +3,7 @@ import os, sys, io, json, hashlib, secrets, sqlite3
 from datetime import datetime, timedelta
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn
-import urllib.parse
+import urllib.parse, re
 
 PORT = int(os.environ.get('SCOS_PORTAL_PORT', '5050'))  # dev: 5051
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS orders (
     po TEXT NOT NULL, po_line TEXT NOT NULL DEFAULT '1',
     region TEXT, sub_type TEXT, priority TEXT, cto_p1 TEXT,
     mcid TEXT, ship_mode TEXT, scac TEXT, master_type TEXT, cust TEXT, ship_status TEXT,
+    project TEXT DEFAULT 'DAISY',
     po_qty INTEGER DEFAULT 0, remain_qty INTEGER DEFAULT 0, ship_qty INTEGER DEFAULT 0,
     msbd TEXT, psd TEXT, final_msbd TEXT, po_received TEXT,
     status TEXT, ack_status TEXT, is_hold TEXT, hold_code TEXT, status_label TEXT,
@@ -61,6 +62,8 @@ def _db():
     try: conn.execute('ALTER TABLE orders ADD COLUMN cust TEXT')
     except sqlite3.OperationalError: pass
     try: conn.execute('ALTER TABLE orders ADD COLUMN ship_status TEXT')
+    except sqlite3.OperationalError: pass
+    try: conn.execute('ALTER TABLE orders ADD COLUMN project TEXT DEFAULT \'DAISY\'')
     except sqlite3.OperationalError: pass
     conn.commit()
     return conn
@@ -183,6 +186,20 @@ class Handler(SimpleHTTPRequestHandler):
 
     AI_WIDGET = '''
 <style>
+#proj-bar{position:fixed;top:12px;right:16px;z-index:9997;display:flex;gap:6px;font-family:system-ui}
+#proj-bar button{padding:6px 14px;border-radius:20px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer}
+#proj-bar button.on{background:#3b82f6;border-color:#3b82f6;color:#fff}
+</style>
+<div id="proj-bar">
+  <button data-p="DAISY" onclick="switchProj(this)">DAISY</button>
+  <button data-p="SWAN" onclick="switchProj(this)">SWAN</button>
+</div>
+<script>
+function switchProj(btn){var p=btn.getAttribute('data-p');document.cookie='scos_project='+p+';path=/;max-age=31536000';location.reload();}
+(function(){var m=document.cookie.match(/scos_project=([A-Za-z0-9_]+)/);var cur=m?m[1]:'DAISY';
+var bs=document.querySelectorAll('#proj-bar button');for(var i=0;i<bs.length;i++){if(bs[i].getAttribute('data-p')===cur)bs[i].className='on';}})();
+</script>
+<style>
 #ai-fab{position:fixed;right:18px;bottom:18px;z-index:9999;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#7aa2f7,#bb9af7);border:none;cursor:pointer;font-size:24px;box-shadow:0 6px 20px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s}
 #ai-fab:hover{transform:scale(1.08)}
 #ai-drawer{position:fixed;right:14px;bottom:84px;z-index:9998;width:420px;max-width:94vw;height:560px;max-height:74vh;border-radius:14px;border:1px solid #334155;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;overflow:hidden;background:#0f172a}
@@ -224,9 +241,21 @@ function aiToggle(){
         self.end_headers()
         self.wfile.write(data)
 
+    def _proj(self):
+        """当前项目（scos_project cookie），默认 DAISY（向后兼容）。"""
+        c = self.headers.get('Cookie', '')
+        m = re.search(r'scos_project=([A-Za-z0-9_]+)', c)
+        return m.group(1) if m else 'DAISY'
+
+    def _pkey(self, key):
+        """缓存 key 命名空间：DAISY 用原名（旧数据零迁移），其他项目加前缀。"""
+        p = self._proj()
+        return f'{p}:{key}' if p != 'DAISY' else key
+
     def _serve_cache(self, key):
+        pkey = self._pkey(key)
         conn = _db()
-        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (key,)).fetchone()
+        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (pkey,)).fetchone()
         conn.close()
         if not row:
             self._json({'error': f'No cache for {key}'}, 404)
@@ -234,7 +263,7 @@ function aiToggle(){
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         if qs.get('meta', [''])[0] == '1':
             # Phase 2: data provenance for AI Engine — 数据来源 + 更新时间
-            self._json({'key': key, 'computed_at': row['computed_at'], 'data': json.loads(row['data'])})
+            self._json({'key': pkey, 'computed_at': row['computed_at'], 'data': json.loads(row['data'])})
         else:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -243,8 +272,8 @@ function aiToggle(){
             self.wfile.write(row['data'].encode('utf-8'))
 
     def _build_orders_sql(self, qs):
-        """过滤条件构建 — /api/orders 与 /api/export/orders 共用同一套逻辑。"""
-        sql, params = 'SELECT * FROM orders WHERE 1=1', []
+        """过滤条件构建 — /api/orders 与 /api/export/orders 共用同一套逻辑。项目过滤随 cookie。"""
+        sql, params = 'SELECT * FROM orders WHERE project=? AND 1=1', [self._proj()]
         for f in ('region','sub_type','ack_status','ship_mode','scac','mcid','cto_p1','priority','is_hold','cust'):
             v = (qs.get(f, [''])[0]).strip()
             if v: sql += f' AND {f}=?'; params.append(v)
@@ -360,7 +389,7 @@ function aiToggle(){
             self._json({'error': 'Missing po or asn param'}, 400)
             return
         conn = _db()
-        row = conn.execute("SELECT data, computed_at FROM cache WHERE key='st_check'").fetchone()
+        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (self._pkey('st_check'),)).fetchone()
         conn.close()
         if not row:
             self._json({'error': 'st_check cache not available', 'computed_at': None}, 404)
@@ -393,7 +422,7 @@ function aiToggle(){
             self._json({'error': 'Missing asn param'}, 400)
             return
         conn = _db()
-        row = conn.execute("SELECT data, computed_at FROM cache WHERE key='asn_check'").fetchone()
+        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (self._pkey('asn_check'),)).fetchone()
         conn.close()
         if not row:
             self._json({'error': 'asn_check cache not available', 'computed_at': None}, 404)

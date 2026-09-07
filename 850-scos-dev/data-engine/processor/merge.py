@@ -14,8 +14,9 @@ def normalize(data):
     return data or []
 
 
-def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw):
-    """Merge all reports. Returns list of dicts with all computed fields."""
+def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw, project='DAISY'):
+    """Merge all reports. Returns list of dicts with all computed fields.
+    project: 项目标签（DAISY/SWAN），写入每条记录。"""
     po_d = normalize(po_raw); e2e_d = normalize(e2e_raw); gpp_d = normalize(gpp_raw)
     asn_d = normalize(asn_raw); ship_d = normalize(ship_raw)
 
@@ -92,7 +93,7 @@ def merge(po_raw, e2e_raw, gpp_raw, asn_raw, ship_raw):
             sub_type=sub, priority=pri, cto_p1=cto_p1,
             mcid=p.get('MCID'), ship_mode=p.get('SHIP_MODE'), scac=p.get('SCAC'),
             master_type=p.get('MASTER_TYPE'), cust=p.get('CUST') or p.get('Cust') or '',
-            ship_status=po_ship_status.get(po, ''),
+            ship_status=po_ship_status.get(po, ''), project=project,
             po_qty=po_qty, remain_qty=p.get('REMAIN_QTY',0) or 0, ship_qty=p.get('SHIP_QTY',0) or 0,
             msbd=cd(p.get('MSBD')), psd=cd(p.get('PSD')), final_msbd=cd(p.get('FINAL_MSBD')),
             po_received=p.get('PO_RECEIVE_DATE','') if p.get('PO_RECEIVE_DATE') and str(p.get('PO_RECEIVE_DATE','')).strip()[:10] not in ('0001-01-01','1900-01-01') else None,
