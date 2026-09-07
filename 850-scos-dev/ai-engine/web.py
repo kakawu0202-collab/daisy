@@ -3,13 +3,16 @@
 架构约束：本服务只调 Service Layer 与 LLM；浏览器用户直接提问，无需终端。
 启动：python web.py（或双击 start-ai.bat）
 """
-import os, json, sys
+import os, json, sys, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from agent import ask
+
+# 免费档 LLM 并发=1：同一时刻只处理一个问题，防止叠加触发 429
+_ASK_LOCK = threading.Lock()
 
 PORT = int(os.environ.get('SCOS_AI_PORT', '5099'))
 
@@ -95,8 +98,14 @@ class Handler(BaseHTTPRequestHandler):
                 if not question:
                     self._json({'answer': '请输入问题'}, 400)
                     return
-                answer = ask(question)
-                self._json({'answer': answer})
+                if not _ASK_LOCK.acquire(blocking=False):
+                    self._json({'answer': '⚠️ 上一个问题还在处理中，请等它回答完再问（约 10-60 秒）'}, 429)
+                    return
+                try:
+                    answer = ask(question)
+                    self._json({'answer': answer})
+                finally:
+                    _ASK_LOCK.release()
             except RuntimeError as e:
                 self._json({'answer': f'⚠️ {e}'}, 500)
             except Exception as e:
