@@ -22,11 +22,20 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t1);paddi
 .bn a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--t3);text-decoration:none;font-size:10px;gap:2px;min-height:44px}
 .bn a.ac,.bn a:hover{color:var(--blue)}.bn .bi{font-size:16px}.bn .bl{font-size:9px}
 @media(min-width:768px){.bn{display:none}body{padding:32px}}
+.main-grid{display:grid;grid-template-columns:minmax(320px,1fr) 420px;gap:16px;max-width:1280px;margin:0 auto;align-items:start}
+@media(max-width:1080px){.main-grid{grid-template-columns:1fr}}
+.ai-pane{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;height:calc(100vh - 120px);min-height:480px;display:flex;flex-direction:column;position:sticky;top:32px}
+.ai-head{padding:12px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.ai-head .ai-sub{font-size:10px;color:var(--t3);font-weight:400}
+.ai-pane iframe{flex:1;border:none;width:100%;display:none;background:#0f172a}
+#ai-hint{display:none;flex:1;align-items:center;justify-content:center;text-align:center;color:var(--t3);font-size:12px;line-height:2}
 </style>
 </head>
 <body>
 <nav class="bn"><a href="/index.html" class="ac"><span class="bi">🏠</span><span class="bl">Home</span></a><a href="/k1.html"><span class="bi">📊</span><span class="bl">K1</span></a><a href="/cto-kpi.html"><span class="bi">📈</span><span class="bl">KPI</span></a><a href="/status.html"><span class="bi">🔧</span><span class="bl">Status</span></a></nav>
 
+<div class="main-grid">
+<div class="left-col">
 <div class="top"><h1>850 SCOS</h1><div class="t">Supply Chain Operating System</div></div>
 
 <div class="sec"><h3>Quick Links</h3>
@@ -38,9 +47,27 @@ body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t1);paddi
     <a href="/status.html"><span class="ic">🔧</span><div><div class="lbl">System Status</div><div class="sub">Engine + Portal health monitoring</div></div></a>
     <a href="/report-builder.html"><span class="ic">📝</span><div><div class="lbl">Report Builder</div><div class="sub">Custom fields · Filters · CSV export</div></div></a>
     <a href="/tools.html"><span class="ic">🛠️</span><div><div class="lbl">Tools</div><div class="sub">ASN Checker · ST Validator · Excel Generator</div></div></a>
-    <a href="http://localhost:5099"><span class="ic">🤖</span><div><div class="lbl">AI Assistant</div><div class="sub">自然语言问数据 · 需先启动 start-ai.bat</div></div></a>
     <a href="/admin.html"><span class="ic">👤</span><div><div class="lbl">Admin</div><div class="sub">User account management</div></div></a>
   </div>
 </div>
+</div>
+
+<div class="ai-pane">
+  <div class="ai-head">🤖 AI Assistant <span class="ai-sub">自然语言问数据</span></div>
+  <iframe id="ai-frame" src="about:blank"></iframe>
+  <div id="ai-hint">AI 服务未启动<br>双击 <b>start-ai.bat</b> 后刷新本页</div>
+</div>
+</div>
+
+<script>
+(function(){
+  var f=document.getElementById('ai-frame'),h=document.getElementById('ai-hint');
+  fetch('http://localhost:5099/',{method:'GET'}).then(function(){
+    h.style.display='none';f.style.display='block';f.src='http://localhost:5099/';
+  }).catch(function(){
+    h.style.display='block';f.style.display='none';
+  });
+})();
+</script>
 </body>
 </html>

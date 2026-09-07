@@ -144,8 +144,13 @@ class Handler(SimpleHTTPRequestHandler):
             elif p in ('/sw.js', '/manifest.json'):
                 self._serve_static(p)
             else:
-                if p in ('/', ''): self.path = '/index.html'
-                super().do_GET()
+                if p in ('/', ''):
+                    self.path = '/index.html'
+                    p = self.path
+                if p.endswith('.html'):
+                    self._serve_html_injected(p)
+                else:
+                    super().do_GET()
         except Exception as e:
             self._json({'error': str(e)}, 500)
 
@@ -175,6 +180,49 @@ class Handler(SimpleHTTPRequestHandler):
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
             'kpi_cached': bool(has_kpi), 'version': 'scos-1.4-dev'})
+
+    AI_WIDGET = '''
+<style>
+#ai-fab{position:fixed;right:18px;bottom:18px;z-index:9999;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#7aa2f7,#bb9af7);border:none;cursor:pointer;font-size:24px;box-shadow:0 6px 20px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#ai-fab:hover{transform:scale(1.08)}
+#ai-drawer{position:fixed;right:14px;bottom:84px;z-index:9998;width:420px;max-width:94vw;height:560px;max-height:74vh;border-radius:14px;border:1px solid #334155;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;overflow:hidden;background:#0f172a}
+#ai-drawer iframe{width:100%;height:100%;border:none;display:none}
+#ai-hint{display:none;padding:40px 20px;text-align:center;color:#94a3b8;font-size:13px;line-height:2;font-family:system-ui}
+</style>
+<button id="ai-fab" onclick="aiToggle()" title="AI Assistant">🤖</button>
+<div id="ai-drawer">
+  <iframe id="ai-frame" src="about:blank"></iframe>
+  <div id="ai-hint">AI 服务未启动<br>双击 <b>start-ai.bat</b> 后刷新页面</div>
+</div>
+<script>
+function aiToggle(){
+  var d=document.getElementById('ai-drawer'),f=document.getElementById('ai-frame'),h=document.getElementById('ai-hint');
+  var open=d.style.display!=='block';
+  d.style.display=open?'block':'none';
+  if(open&&(f.src==='about:blank'||!f.src)){
+    fetch('http://localhost:5099/',{method:'GET'}).then(function(){
+      h.style.display='none';f.style.display='block';f.src='http://localhost:5099/';
+    }).catch(function(){h.style.display='block';f.style.display='none';});
+  }
+}
+</script>
+'''
+
+    def _serve_html_injected(self, path):
+        """静态 HTML + AI 悬浮球注入（所有 dashboard 页面统一获得悬浮对话入口）。"""
+        fp = os.path.join(DASHBOARD, path.lstrip('/'))
+        if not os.path.isfile(fp):
+            self.send_error(404)
+            return
+        with open(fp, encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        content = content.replace('</body>', self.AI_WIDGET + '</body>')
+        data = content.encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def _serve_cache(self, key):
         conn = _db()

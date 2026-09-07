@@ -107,12 +107,14 @@ class Handler(BaseHTTPRequestHandler):
     def _html(self, content):
         self.send_response(200)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(content.encode('utf-8'))
 
     def _json(self, data, code=200):
         self.send_response(code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
 
