@@ -6,14 +6,16 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-07T16:23:27.526Z
+  modified: 2026-09-07T16:57:28.783Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
 
 ## 版本与环境（2026-08-18 起）
 
-- **线上 = `d:\workspace\850-scos`（v1.0.2 🔒 锁定，代码内版本号 scos-1.0.2，2026-09-02）**
+- **线上 = `d:\workspace\850-scos`（v1.0.3 🔒 锁定，代码内版本号 scos-1.0.3，2026-09-08）**
+- v1.0.3 内容：MSBD CLOSE=达成口径（⚠️ 需公司电脑同步 k1.py 生效）+ ASN# 列；同步包 850-scos-company-sync-v1.0.2.zip（9 文件）
+- **公司电脑待办**：引擎停推（09-05 12:29，疑似 OMS 登录失败/密码环境变量丢失）——回公司后：查 $env:OMS_PASSWORD → 手动 python main.py 看 Login FAILED → 覆盖同步包 → 重启
 - **开发 = `d:\workspace\850-scos-dev` — 所有新功能在这里做（当前 v1.3-dev 攒着拆层/ServiceLayer/ASN Checker 未上线）**
 - **🔒 上线铁律（用户 2026-08-30 定）：任何线上改动必须经用户逐次明确批准，不得擅自上线**
 - 端口隔离：线上 5050/8700/8900 vs dev 5051/8701/8901（env: SCOS_PORTAL_PORT/SCOS_ENGINE_PORT/SCOS_CONTROL_PORT/YUMIN_URL）
