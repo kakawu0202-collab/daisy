@@ -16,7 +16,10 @@ YUMIN_LOCAL = 'http://localhost:5050/sync'
 YUMIN_REMOTE = 'https://yumin.taila2a2ad.ts.net/sync'
 
 # Max records per request — split large pushes into chunks
-CHUNK_SIZE = 2000
+# 2026-09-10：公司出口大包上传会卡死 → 小块 + gzip 压缩 + 长超时
+CHUNK_SIZE = 300
+PUSH_TIMEOUT = (30, 600)
+GZIP_THRESHOLD = 10 * 1024  # payload >10KB 时 gzip
 
 
 def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None):
@@ -81,8 +84,7 @@ def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None)
 
             for attempt in range(3):
                 try:
-                    r = requests.post(target_url, json=payload,
-                                      timeout=(30, 300), verify=target_url.startswith('https'))
+                    r = _post_compressed(target_url, payload)
                     if r.ok:
                         print(f'[publisher] OK {target_url} chunk {idx+1}/{len(chunks)} ({len(chunk)} records)')
                         any_sent = True
@@ -118,6 +120,18 @@ def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None)
         print('[publisher] Remote NOT confirmed — will retry same records next cycle')
 
     return (targets[-1] if any_sent else None, len(changed) if any_sent else 0)
+
+
+def _post_compressed(target_url, payload):
+    """gzip 压缩大 payload 后发送（接收端需支持 Content-Encoding: gzip）。"""
+    import gzip
+    data = json.dumps(payload, ensure_ascii=False, default=str).encode('utf-8')
+    headers = {'Content-Type': 'application/json'}
+    if len(data) > GZIP_THRESHOLD:
+        data = gzip.compress(data, 6)
+        headers['Content-Encoding'] = 'gzip'
+    return requests.post(target_url, data=data, headers=headers,
+                         timeout=PUSH_TIMEOUT, verify=target_url.startswith('https'))
 
 
 def _summarize_risks(risks):

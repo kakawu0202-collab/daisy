@@ -235,7 +235,11 @@ class Handler(SimpleHTTPRequestHandler):
         sys.path.insert(0, RECEIVER)
         from sync import handle_sync
         length = int(self.headers.get('Content-Length', 0))
-        body = json.loads(self.rfile.read(length)) if length > 0 else {}
+        raw = self.rfile.read(length) if length > 0 else b''
+        if self.headers.get('Content-Encoding', '').lower() == 'gzip':
+            import gzip
+            raw = gzip.decompress(raw)
+        body = json.loads(raw) if raw else {}
         self._json(handle_sync(body))
 
     def _login(self):

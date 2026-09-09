@@ -182,7 +182,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.4-dev'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.7-dev'})
 
     AI_WIDGET = '''
 <style>
@@ -440,7 +440,11 @@ function aiToggle(){
         sys.path.insert(0, RECEIVER)
         from sync import handle_sync
         length = int(self.headers.get('Content-Length', 0))
-        body = json.loads(self.rfile.read(length)) if length > 0 else {}
+        raw = self.rfile.read(length) if length > 0 else b''
+        if self.headers.get('Content-Encoding', '').lower() == 'gzip':
+            import gzip
+            raw = gzip.decompress(raw)
+        body = json.loads(raw) if raw else {}
         self._json(handle_sync(body))
 
     def _login(self):
