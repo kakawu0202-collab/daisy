@@ -73,10 +73,11 @@ def push(conn, records_all, k1_summary, daily_summary, risks, kpi, e2e_kpi=None)
             chunks = [[]]  # summaries-only push
 
         for idx, chunk in enumerate(chunks):
-            payload = dict(payload_base)
-            payload['records'] = chunk
-            payload['chunk'] = f'{idx + 1}/{len(chunks)}'
-            payload['final'] = idx == len(chunks) - 1
+            is_final = idx == len(chunks) - 1
+            # 摘要只随最后一块发送（e2e_kpi 等大摘要每块重复会撑爆慢链路，2026-09-08）
+            payload = {'records': chunk, 'chunk': f'{idx + 1}/{len(chunks)}', 'final': is_final}
+            if is_final:
+                payload.update(payload_base)
 
             for attempt in range(3):
                 try:
