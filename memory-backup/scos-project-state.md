@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-07T16:57:28.783Z
+  modified: 2026-09-09T16:17:07.574Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -23,6 +23,7 @@ metadata:
 - dev 数据 = 线上 2026-08-18 快照副本（data/*.db），改坏可重拷
 - dev 启动：start-dev.bat（Portal 控制台）/ start-dev-silent.vbs（双服务静默）/ start-engine-dev.bat（Engine）
 - **禁忌：dev 机上严禁 taskkill python.exe 全局杀进程（会杀线上 Portal）**
+- **Yumin 开机自启已装（2026-09-08）**：Startup 文件夹 `Yumin-AutoStart.vbs` → 静默跑 `d:\workspace\yumin-autostart.ps1`（三服务 5050/5051/5099，端口占用即跳过=防双进程）。重启后约 30 秒内自动恢复；Tailscale 自启动+funnel 持久
 - 版本规则：dev 验证通过后增量合并回线上并升级版本号（VERSION.md）
 - v1.0.1 上线内容：K1 日报 🚨 已入库未开ASN 卡片（Yumin 侧实时算 portal/rules/cto_asn.py）+ MSBD 口径标注 + ASN NACK + CUST 列
 - v1.0.2 上线内容（2026-09-02）：卡片排除 ZC 已取消 + ⬇ CSV 下载按钮
