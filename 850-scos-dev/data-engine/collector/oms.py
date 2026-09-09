@@ -1,8 +1,9 @@
 """OMS data collector — stateless pull, no business logic."""
 import os, json, requests
 
-OMS_URL = 'http://luxoms-vn-prod.luxshare-ict.com'
-OMS_IP  = 'http://10.177.20.61'
+# 主备顺序：IP 直连优先（2026-09-08 起公司 DNS 轮询不稳定，域名会卡超时）
+OMS_URL = 'http://10.177.20.61'
+OMS_IP  = 'http://luxoms-vn-prod.luxshare-ict.com'
 
 REPORTS = [
     ('0848012288', 'po'), ('1593920512', 'e2e'), ('0320073728', 'gpp'),
