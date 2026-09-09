@@ -6,7 +6,7 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-09T16:17:07.574Z
+  modified: 2026-09-09T17:56:24.379Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
@@ -15,7 +15,12 @@ metadata:
 
 - **线上 = `d:\workspace\850-scos`（v1.0.3 🔒 锁定，代码内版本号 scos-1.0.3，2026-09-08）**
 - v1.0.3 内容：MSBD CLOSE=达成口径（⚠️ 需公司电脑同步 k1.py 生效）+ ASN# 列；同步包 850-scos-company-sync-v1.0.2.zip（9 文件）
-- **公司电脑待办**：引擎停推（09-05 12:29，疑似 OMS 登录失败/密码环境变量丢失）——回公司后：查 $env:OMS_PASSWORD → 手动 python main.py 看 Login FAILED → 覆盖同步包 → 重启
+- ✅ **公司电脑引擎已恢复（2026-09-10 01:52 起数据恢复推送）**：
+  - 根因链：进程死了（无 python）+ OMS 域名 DNS 轮询 4 个 IP 中只有 10.177.20.61 通 → 客户端卡超时
+  - 修复：oms.py 主备互换（IP 直连优先）；push.py 小块300+gzip+600s（公司出口大包上传会卡）；server.py 支持 gzip 解压
+  - hosts 被公司安全软件锁，不能加条目——改代码绕开是正确路径
+  - 同步包 850-scos-company-sync-v1.0.2.zip（11 文件）已覆盖：CUST 全量有值（DAISY 9312 / DAISY_35 36）、MSBD CLOSE=达成口径生效（8/21 假缺口消失）
+  - **公司电脑无 Tailscale 且不能常连**——推送只能走公网 funnel；若再超时，优先排查公司出口大流量限制
 - **开发 = `d:\workspace\850-scos-dev` — 所有新功能在这里做（当前 v1.3-dev 攒着拆层/ServiceLayer/ASN Checker 未上线）**
 - **🔒 上线铁律（用户 2026-08-30 定）：任何线上改动必须经用户逐次明确批准，不得擅自上线**
 - 端口隔离：线上 5050/8700/8900 vs dev 5051/8701/8901（env: SCOS_PORTAL_PORT/SCOS_ENGINE_PORT/SCOS_CONTROL_PORT/YUMIN_URL）
