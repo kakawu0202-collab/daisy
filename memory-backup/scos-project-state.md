@@ -6,14 +6,17 @@ metadata:
   type: project
   updated: 2026-08-18
   originSessionId: 59f737cb-72a3-47b9-a322-d27083bd9118
-  modified: 2026-09-09T17:56:24.379Z
+  modified: 2026-09-10T15:53:18.933Z
 ---
 
 # 850 SCOS 项目状态（2026-08-18）
 
 ## 版本与环境（2026-08-18 起）
 
-- **线上 = `d:\workspace\850-scos`（v1.0.3 🔒 锁定，代码内版本号 scos-1.0.3，2026-09-08）**
+- **线上 = `d:\workspace\850-scos`（v1.0.4 🔒 锁定，代码内版本号 scos-1.0.4，2026-09-10）**
+- v1.0.4 内容：全站认证（白名单：login/sw/manifest/icons + /sync + 登录接口）；/ai/ 代理+悬浮球+首页AI面板；标准端点补 prod；AI 走 ai-bot 服务账号读 prod 实时数据（凭据在 ai-engine/.env，不入库不打印）
+- 监控脚本注意：5050 API 现在都要登录——验证用 ai-bot 会话（/api/login → cookie）
+- 公司内网访问：防火墙放行 5050/8900（netsh 命令待用户执行）后同事可访问 http://公司电脑IP:5050；start-all-silent.vbs 已含 control.py（8900）
 - v1.0.3 内容：MSBD CLOSE=达成口径（⚠️ 需公司电脑同步 k1.py 生效）+ ASN# 列；同步包 850-scos-company-sync-v1.0.2.zip（9 文件）
 - ✅ **公司电脑引擎已恢复（2026-09-10 01:52 起数据恢复推送）**：
   - 根因链：进程死了（无 python）+ OMS 域名 DNS 轮询 4 个 IP 中只有 10.177.20.61 通 → 客户端卡超时
