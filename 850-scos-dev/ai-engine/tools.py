@@ -2,15 +2,37 @@
 
 每个工具都映射到 Service Layer 端点；AI 引擎禁止直接访问 SQLite / Data Engine。
 返回 (payload, computed_at)：computed_at 用于回答附"数据更新时间"。
+全站认证后：以服务账号（SCOS_AI_USER/PASSWORD）登录，会话 cookie 复用。
 """
 import requests
-from config import API_BASE, TIMEOUT
+from config import API_BASE, TIMEOUT, AI_USER, AI_PASSWORD
 
 META = {'meta': '1'}
 
+_sess = requests.Session()
+_logged = False
+
+
+def _ensure_login():
+    global _logged
+    if _logged:
+        return
+    try:
+        r = _sess.post(API_BASE + '/api/login',
+                       json={'username': AI_USER, 'password': AI_PASSWORD}, timeout=30)
+        _logged = r.status_code == 200
+    except Exception:
+        _logged = False
+
 
 def _get(path, params=None):
-    r = requests.get(API_BASE + path, params=params, timeout=TIMEOUT)
+    _ensure_login()
+    r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
+    if r.status_code in (302, 401):  # 会话过期 → 重登一次
+        global _logged
+        _logged = False
+        _ensure_login()
+        r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
     r.raise_for_status()
     return r.json()
 

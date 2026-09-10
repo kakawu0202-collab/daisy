@@ -94,8 +94,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         p = urllib.parse.urlparse(self.path).path
-        if p in ('/', '/index.html', '/k1.html'):
-            if not _require(self): return
+        # 全站认证（2026-09-10）：白名单外一律要求登录
+        if not (p in ('/login.html', '/sw.js', '/manifest.json') or p.startswith('/icons/')):
+            if not _require(self):
+                return
         try:
             if p == '/api/logout':
                 self._logout()
@@ -103,6 +105,21 @@ class Handler(SimpleHTTPRequestHandler):
                 self._health()
             elif p == '/api/k1-summary':     # compat: old dashboard
                 self._serve_cache('k1_summary')
+            # Phase 2 标准端点（2026-09-10 上线 prod，AI 数据入口统一）
+            elif p == '/api/k1':
+                self._serve_cache('k1_summary')
+            elif p == '/api/daily':
+                self._serve_cache('daily_summary')
+            elif p == '/api/kpi':
+                self._serve_cache('kpi')
+            elif p == '/api/e2e':
+                self._serve_cache('e2e_kpi')
+            elif p == '/api/risk':
+                self._serve_cache('risks')
+            elif p == '/api/risk-summary':
+                self._serve_cache('risk_summary')
+            elif p == '/api/nack':
+                self._query_nack()
             elif p == '/api/daily-summary':  # compat: old dashboard
                 self._serve_cache('daily_summary')
             elif p == '/api/sort-data':      # compat: old dashboard drill-down
@@ -111,6 +128,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._query_orders()
             elif p == '/api/cto-asn-missing':
                 self._cto_asn_missing()
+            elif p.startswith('/ai'):
+                self._ai_proxy()
             elif p.startswith('/api/cache/'):
                 key = p.split('/')[-1]
                 self._serve_cache(key)
@@ -121,13 +140,22 @@ class Handler(SimpleHTTPRequestHandler):
             elif p in ('/sw.js', '/manifest.json'):
                 self._serve_static(p)
             else:
-                if p in ('/', ''): self.path = '/index.html'
-                super().do_GET()
+                if p in ('/', ''):
+                    self.path = '/index.html'
+                    p = self.path
+                if p.endswith('.html'):
+                    self._serve_html_injected(p)
+                else:
+                    super().do_GET()
         except Exception as e:
             self._json({'error': str(e)}, 500)
 
     def do_POST(self):
         p = urllib.parse.urlparse(self.path).path
+        # 免认证 POST：引擎推送 / 登录 / 注册 / 管理员登录
+        if p not in ('/sync', '/api/login', '/api/register', '/api/admin-login'):
+            if not _require(self):
+                return
         try:
             if p == '/sync':
                 self._sync()
@@ -136,6 +164,8 @@ class Handler(SimpleHTTPRequestHandler):
             elif p == '/api/admin-login': self._admin_login()
             elif p == '/api/admin-action': self._admin_action()
             elif p == '/api/admin-users': self._admin_users()
+            elif p.startswith('/ai'):
+                self._ai_proxy()
             else: self._json({'error': 'Not found'}, 404)
         except Exception as e:
             self._json({'error': str(e)}, 500)
@@ -151,20 +181,25 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0.3'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0.4'})
 
     def _serve_cache(self, key):
         conn = _db()
-        row = conn.execute('SELECT data FROM cache WHERE key=?', (key,)).fetchone()
+        row = conn.execute('SELECT data, computed_at FROM cache WHERE key=?', (key,)).fetchone()
         conn.close()
-        if row:
+        if not row:
+            self._json({'error': f'No cache for {key}'}, 404)
+            return
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if qs.get('meta', [''])[0] == '1':
+            # 数据溯源（AI 附更新时间）
+            self._json({'key': key, 'computed_at': row['computed_at'], 'data': json.loads(row['data'])})
+        else:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(row['data'].encode('utf-8'))
-        else:
-            self._json({'error': f'No cache for {key}'}, 404)
 
     def _query_orders(self):
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
@@ -222,6 +257,77 @@ class Handler(SimpleHTTPRequestHandler):
                 if old_k in r: mr[new_k] = r[old_k]
             mapped.append(mr)
         self._json({'records': mapped, 'total': len(mapped)})
+
+    AI_WIDGET = '''
+<style>
+#ai-fab{position:fixed;right:18px;bottom:18px;z-index:9999;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#7aa2f7,#bb9af7);border:none;cursor:pointer;font-size:24px;box-shadow:0 6px 20px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#ai-fab:hover{transform:scale(1.08)}
+#ai-drawer{position:fixed;right:14px;bottom:84px;z-index:9998;width:420px;max-width:94vw;height:560px;max-height:74vh;border-radius:14px;border:1px solid #334155;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;overflow:hidden;background:#0f172a}
+#ai-drawer iframe{width:100%;height:100%;border:none;display:none}
+#ai-hint{display:none;padding:40px 20px;text-align:center;color:#94a3b8;font-size:13px;line-height:2;font-family:system-ui}
+</style>
+<button id="ai-fab" onclick="aiToggle()" title="AI Assistant">🤖</button>
+<div id="ai-drawer">
+  <iframe id="ai-frame" src="about:blank"></iframe>
+  <div id="ai-hint">AI 服务未启动<br>请在本机双击 start-ai.bat 后刷新</div>
+</div>
+<script>
+function aiToggle(){
+  var d=document.getElementById('ai-drawer'),f=document.getElementById('ai-frame'),h=document.getElementById('ai-hint');
+  var open=d.style.display!=='block';
+  d.style.display=open?'block':'none';
+  if(open&&(f.src==='about:blank'||!f.src)){
+    fetch('/ai/').then(function(){
+      h.style.display='none';f.style.display='block';f.src='/ai/';
+    }).catch(function(){h.style.display='block';f.style.display='none';});
+  }
+}
+</script>
+'''
+
+    def _serve_html_injected(self, path):
+        """静态 HTML + AI 悬浮球注入（所有页面统一悬浮对话入口，/ai/ 同源免跨域）。"""
+        fp = os.path.join(DASHBOARD, path.lstrip('/'))
+        if not os.path.isfile(fp):
+            self.send_error(404)
+            return
+        with open(fp, encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        content = content.replace('</body>', self.AI_WIDGET + '</body>')
+        data = content.encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _query_nack(self):
+        """NACK 订单查询 — 复用 _query_orders 的过滤/映射，固定 ack_status=REJECT。零业务逻辑。"""
+        parsed = urllib.parse.urlparse(self.path)
+        extra = parsed.query
+        self.path = parsed.path + '?ack_status=REJECT' + (('&' + extra) if extra else '')
+        self._query_orders()
+
+    def _ai_proxy(self):
+        """AI Assistant 反向代理：/ai/* → http://127.0.0.1:5099（同源，随登录认证）。"""
+        import requests as _rq
+        target = 'http://127.0.0.1:5099' + self.path[3:]
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length) if length > 0 else None
+        headers = {'Content-Type': self.headers.get('Content-Type', 'application/json')}
+        try:
+            if self.command == 'GET':
+                resp = _rq.get(target, timeout=300)
+            else:
+                resp = _rq.post(target, data=body, headers=headers, timeout=300)
+            self.send_response(resp.status_code)
+            for k, v in resp.headers.items():
+                if k.lower() in ('content-type', 'content-length'):
+                    self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(resp.content)
+        except Exception as e:
+            self._json({'error': f'AI 服务不可用: {e}'}, 502)
 
     def _cto_asn_missing(self):
         """CTO P1 已入库未开 ASN 提醒 — 规则在 portal/rules/cto_asn.py，从 portal.db orders 实时计算。"""

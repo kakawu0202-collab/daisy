@@ -1,5 +1,15 @@
 # 850 SCOS — 版本记录
 
+## v1.0.4（2026-09-10）— 🔒 线上锁定（安全加固 + AI Assistant）
+
+> 代码内版本号：`scos-1.0.4`
+
+**本次上线（经用户批准）：**
+- 🔐 **全站认证**：所有页面/API 要求登录；免认证仅 login.html/sw.js/manifest.json/icons + /sync（引擎推送）+ 登录/注册接口
+- 🤖 **AI Assistant 嵌入 Portal**：/ai/ 反向代理（5099 服务，同源同认证）+ 全站悬浮球 + 首页右半对话框；AI 数据源切到 prod 实时数据（ai-bot 服务账号）
+- 📡 **Service Layer 标准端点补上 prod**：/api/k1 /api/daily /api/kpi /api/e2e /api/risk /api/risk-summary /api/nack + ?meta=1 溯源
+- 公司侧配套：start-all-silent.vbs 加监控台(8900)；防火墙放行 5050/8900 后内网可访问
+
 ## v1.0.3（2026-09-08）— 🔒 线上锁定（口径修正）
 
 > 代码内版本号：`scos-1.0.3`（Portal 已生效；MSBD 修正需公司电脑同步 k1.py 后生效）

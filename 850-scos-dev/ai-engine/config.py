@@ -2,9 +2,6 @@
 import os
 from pathlib import Path
 
-# SCOS Service Layer（AI 唯一数据入口）
-API_BASE = os.environ.get('SCOS_API_BASE', 'http://localhost:5051')
-
 _HERE = Path(__file__).resolve().parent
 
 
@@ -20,7 +17,10 @@ def _load_dotenv():
                     os.environ.setdefault(k.strip(), v.strip())
 
 
-_load_dotenv()
+_load_dotenv()  # 必须先加载 .env，再读下面的配置
+
+# SCOS Service Layer（AI 唯一数据入口）
+API_BASE = os.environ.get('SCOS_API_BASE', 'http://localhost:5051')
 
 
 def _env(*names, default=''):
@@ -30,6 +30,10 @@ def _env(*names, default=''):
             return v
     return default
 
+
+# Service Layer 登录（全站认证后的服务账号）
+AI_USER = _env('SCOS_AI_USER', 'ai-bot')
+AI_PASSWORD = _env('SCOS_AI_PASSWORD', '')
 
 # LLM 凭据（AI_* 优先，回退 SenseNova 的 SN_*，与 sn-ppt 技能族同约定）
 LLM_API_KEY = _env('AI_API_KEY', 'SN_API_KEY', 'SN_CHAT_API_KEY', 'SN_TEXT_API_KEY')
