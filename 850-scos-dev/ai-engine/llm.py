@@ -15,16 +15,16 @@ def chat(messages, tools=None):
     if tools:
         body['tools'] = tools
         body['tool_choice'] = 'auto'
-    # 免费档并发限制低（429）→ 自动重试，退避 4s/8s
+    # 免费档并发限制低（429）→ 自动重试，指数退避 5s/10s/20s/40s
     last = None
-    for attempt in range(3):
+    for attempt in range(5):
         r = requests.post(url,
                           headers={'Authorization': f'Bearer {LLM_API_KEY}',
                                    'Content-Type': 'application/json'},
                           json=body, timeout=TIMEOUT)
         last = r
-        if r.status_code == 429 and attempt < 2:
-            time.sleep(4 + attempt * 4)
+        if r.status_code == 429 and attempt < 4:
+            time.sleep(5 * (2 ** attempt))
             continue
         break
     last.raise_for_status()

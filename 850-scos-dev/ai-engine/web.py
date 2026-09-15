@@ -109,7 +109,11 @@ class Handler(BaseHTTPRequestHandler):
             except RuntimeError as e:
                 self._json({'answer': f'⚠️ {e}'}, 500)
             except Exception as e:
-                self._json({'answer': f'⚠️ 调用失败：{e}'}, 500)
+                msg = str(e)
+                if '429' in msg:
+                    msg = '模型服务限流中（智谱免费档额度/频率限制）。请等 1-2 分钟再试；' \
+                          '若频繁出现，可考虑升级付费模型（DeepSeek 约几元/月）或稍后再用。'
+                self._json({'answer': f'⚠️ {msg}'}, 500)
         else:
             self._json({'error': 'not found'}, 404)
 
