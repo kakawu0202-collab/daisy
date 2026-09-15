@@ -308,8 +308,6 @@ function aiToggle(){
                 sql += ' AND po_received >= ? AND po_received < ?'
                 params.append(lo); params.append(hi)
             except: pass
-        limit = qs.get('limit', [''])[0]
-        if limit: sql += ' LIMIT ?'; params.append(min(int(limit), 50000))
         return sql, params
 
     COL_MAP = {'po':'PO','po_line':'PO_LINE','region':'REGION','sub_type':'SUB_TYPE',
@@ -331,16 +329,26 @@ function aiToggle(){
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         conn = _db()
         sql, params = self._build_orders_sql(qs)
+        # total = LIMIT 前的真实匹配总数（AI/导出计数依赖此语义）
+        total = conn.execute(f'SELECT COUNT(*) FROM ({sql})', params).fetchone()[0]
+        limit = qs.get('limit', [''])[0]
+        if limit:
+            sql += ' LIMIT ?'
+            params.append(min(int(limit), 50000))
         rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
         conn.close()
         mapped = [self._map_order_row(r) for r in rows]
-        self._json({'records': mapped, 'total': len(mapped)})
+        self._json({'records': mapped, 'total': total})
 
     def _export_orders(self):
         """Excel Generator — 过滤 → openpyxl → XLSX 下载。零业务逻辑（纯数据导出）。"""
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         conn = _db()
         sql, params = self._build_orders_sql(qs)
+        limit = qs.get('limit', [''])[0]
+        if limit:
+            sql += ' LIMIT ?'
+            params.append(min(int(limit), 50000))
         rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
         conn.close()
         mapped = [self._map_order_row(r) for r in rows]

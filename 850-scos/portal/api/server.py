@@ -181,7 +181,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({'status': 'ok', 'server_time': datetime.now().isoformat(),
             'db_records': total, 'last_sync_time': last['t'] if last else None,
             'k1_cached': bool(has_k1), 'risks_cached': bool(has_risks),
-            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0.4'})
+            'kpi_cached': bool(has_kpi), 'version': 'scos-1.0.5'})
 
     def _serve_cache(self, key):
         conn = _db()
@@ -234,6 +234,8 @@ class Handler(SimpleHTTPRequestHandler):
                 sql += ' AND po_received >= ? AND po_received < ?'
                 params.append(lo); params.append(hi)
             except: pass
+        # total = LIMIT 前的真实匹配总数（AI 计数/导出依赖此语义，2026-09-15 修复）
+        total_count = conn.execute(f'SELECT COUNT(*) FROM ({sql})', params).fetchone()[0]
         limit = qs.get('limit', [''])[0]
         if limit: sql += ' LIMIT ?'; params.append(min(int(limit), 50000))
         rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
@@ -256,7 +258,7 @@ class Handler(SimpleHTTPRequestHandler):
             for old_k, new_k in col_map.items():
                 if old_k in r: mr[new_k] = r[old_k]
             mapped.append(mr)
-        self._json({'records': mapped, 'total': len(mapped)})
+        self._json({'records': mapped, 'total': total_count})
 
     AI_WIDGET = '''
 <style>

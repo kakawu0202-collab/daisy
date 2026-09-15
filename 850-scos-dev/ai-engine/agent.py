@@ -1,15 +1,27 @@
 """Agent — 自然语言 → function calling → Service Layer → 中文答案（附数据更新时间）。"""
 import json
+import os
 import llm
 from config import MAX_TOOL_ITERS
 from tools import TOOLS, execute
+
+
+def _log(msg):
+    """工具调用追踪日志（debug.log，用于排查弱模型行为）。"""
+    try:
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug.log')
+        with open(p, 'a', encoding='utf-8') as f:
+            f.write(msg + '\n')
+    except Exception:
+        pass
 
 SYSTEM = """你是 850 SCOS 供应链系统的数据助手。你只能通过提供的工具查询数据。
 硬性规则：
 1. 回答任何数据问题前，必须先调用工具查询。禁止凭记忆或猜测编造数字——没有工具结果就没有答案。
 2. 只回答数据能支撑的问题；查不到就明说，不要猜。
 3. 统计类问题（总量/笔数/百分比）优先用汇总工具（get_k1_summary/get_daily_summary/get_kpi/get_risks 等）。
-   例如"NACK 多少笔"用 get_daily_summary 的 nack_count 字段；明细下钻才用 query_orders/get_nack_orders
+   问"NACK 多少笔/多少单"必须用 get_nack_count（只返回一个数字 nack_count，直接引用）；
+   Backlog 分布用 get_backlog_distribution；明细下钻才用 query_orders/get_nack_orders
    （明细默认最多返回 50 条，总数看 total 字段）。
 4. 回答用简洁中文，给出数字和口径说明（例如"非 CTO P1 口径"）。
 5. 回答末尾不要自己写数据更新时间——系统会自动附加，你只管给数字和结论。
@@ -27,9 +39,11 @@ def ask(question, debug=False):
     last_at = ''
     tool_used = False
     last_text = ''
+    _log(f'--- Q: {question}')
     for i in range(MAX_TOOL_ITERS):
         resp = llm.chat(messages, tools=TOOLS)
         calls = llm.tool_calls(resp)
+        _log(f"[iter {i}] finish={resp['choices'][0].get('finish_reason')} calls={len(calls)}")
         if debug:
             print(f"[iter {i}] finish_reason={resp['choices'][0].get('finish_reason')} tool_calls={len(calls)}")
         if not calls:
@@ -45,14 +59,17 @@ def ask(question, debug=False):
         for c in calls:
             fn = c['function']
             name, args = fn['name'], json.loads(fn.get('arguments') or '{}')
+            _log(f'[iter {i}] -> {name}({args})')
             if debug:
                 print(f'[iter {i}] → {name}({args})')
             try:
                 data, at = execute(name, args)
                 last_at = at or last_at
                 content = json.dumps(data, ensure_ascii=False, default=str)
+                _log(f'[iter {i}] result({name}): {content[:300]}')
             except Exception as e:
                 content = json.dumps({'error': str(e)}, ensure_ascii=False)
+                _log(f'[iter {i}] ERROR({name}): {str(e)[:200]}')
             messages.append({'role': 'tool', 'tool_call_id': c['id'], 'content': content})
     if not tool_used:
         return f'⚠️ 模型未调用任何数据工具，回答不可信（已拦截）。模型原话：{last_text or "（空）"}'

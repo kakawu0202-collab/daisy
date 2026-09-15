@@ -129,6 +129,15 @@ TOOLS = [
     {
         'type': 'function',
         'function': {
+            'name': 'get_nack_count',
+            'description': 'NACK 订单总数（笔数）——问"NACK 多少笔/多少单"时必须用这个工具，'
+                           '返回单一字段 nack_count，禁止用其他工具找 NACK 数量。',
+            'parameters': {'type': 'object', 'properties': {}},
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
             'name': 'get_nack_orders',
             'description': 'NACK（被拒）订单列表。可加 region/sub_type/limit 过滤。',
             'parameters': {'type': 'object',
@@ -175,6 +184,9 @@ def execute(name, args):
         if 'limit' not in args:
             args['limit'] = '50'  # 默认截断，防止把全表灌给 LLM；总数用汇总工具
         return _get('/api/orders', args), _freshness()
+    if name == 'get_nack_count':
+        d = _get('/api/nack', {'limit': '1'})
+        return {'nack_count': d.get('total', 0)}, _freshness()
     if name == 'get_nack_orders':
         args = dict(args)
         if 'limit' not in args:
