@@ -26,12 +26,12 @@ def _ensure_login():
 
 
 def _get(path, params=None):
+    global _logged
     for attempt in range(2):
         try:
             _ensure_login()
             r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
             if r.status_code in (302, 401):  # 会话过期 → 重登一次
-                global _logged
                 _logged = False
                 _ensure_login()
                 r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
@@ -44,7 +44,6 @@ def _get(path, params=None):
                     _sess.close()
                 except Exception:
                     pass
-                global _logged
                 _logged = False
                 continue
             raise
