@@ -26,15 +26,28 @@ def _ensure_login():
 
 
 def _get(path, params=None):
-    _ensure_login()
-    r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
-    if r.status_code in (302, 401):  # 会话过期 → 重登一次
-        global _logged
-        _logged = False
-        _ensure_login()
-        r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
-    r.raise_for_status()
-    return r.json()
+    for attempt in range(2):
+        try:
+            _ensure_login()
+            r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
+            if r.status_code in (302, 401):  # 会话过期 → 重登一次
+                global _logged
+                _logged = False
+                _ensure_login()
+                r = _sess.get(API_BASE + path, params=params, timeout=TIMEOUT, allow_redirects=False)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException:
+            if attempt == 0:
+                # 连接失效（进程久挂/系统睡眠唤醒后 socket 僵死）→ 重建会话重试一次
+                try:
+                    _sess.close()
+                except Exception:
+                    pass
+                global _logged
+                _logged = False
+                continue
+            raise
 
 
 def _freshness():
